@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>先见 · 反馈面板（仅开发者）</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { padding: 32px 20px; }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; }
+  .sum { display: flex; gap: 24px; flex-wrap: wrap; margin: 12px 0 4px; }
+  .sum b { font-size: 22px; font-family: var(--serif); }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">先见 · 反馈面板</p>
+  <h1 style="font-size:28px">试用反馈与使用量</h1>
+  <p class="lede">这里只有数字和用户自己写的反馈。没有 IP、没有浏览记录、没有学习内容。导出的 CSV 带邮箱——那是为了回访，不要外传。</p>
+
+  <div class="row">
+    <input class="input" id="token" placeholder="管理员令牌（ADMIN_TOKEN；本机访问可留空）" style="max-width:420px">
+    <button class="btn primary" id="go">读取</button>
+    <button class="btn" id="csv">导出 CSV</button>
+  </div>
+
+  <div id="sum" class="sum"></div>
+  <div id="list"></div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const token = () => sessionStorage.getItem("xj_admin") || $("token").value.trim();
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+async function load() {
+  sessionStorage.setItem("xj_admin", $("token").value.trim());
+  const r = await fetch("/api/admin/feedback", { headers: { "x-admin-token": token() } });
+  const j = await r.json();
+  if (!j.ok) { $("list").innerHTML = '<p class="err">' + esc(j.reason) + "</p>"; return; }
+  const s = j.stats;
+  $("sum").innerHTML =
+    '<div><b>' + s.users + "</b><span class=\"small muted\"> 注册</span></div>" +
+    '<div><b>' + s.consented + "</b><span class=\"small muted\"> 同意</span></div>" +
+    '<div><b>' + s.feedback + "</b><span class=\"small muted\"> 反馈</span></div>" +
+    '<div><b>' + s.active7d + "</b><span class=\"small muted\"> 近 7 天活跃</span></div>";
+  $("list").innerHTML = "<table><thead><tr><th>时间</th><th>邮箱</th><th>这一步</th><th>分</th><th>内容</th></tr></thead><tbody>" +
+    j.items.map((f) => "<tr><td>" + new Date(f.created_at).toLocaleString("zh-CN") + "</td><td>" + esc(f.email) + "</td><td>"
+      + esc(f.scope) + "</td><td>" + (f.rating == null ? "" : f.rating) + "</td><td>" + esc(f.body) + "</td></tr>").join("") +
+    "</tbody></table>";
+}
+
+$("go").onclick = load;
+$("csv").onclick = () => { location.href = "/api/admin/feedback?format=csv&token=" + encodeURIComponent(token()); };
+if (sessionStorage.getItem("xj_admin")) { $("token").value = sessionStorage.getItem("xj_admin"); load(); }
+</script>
+</body>
+</html>
