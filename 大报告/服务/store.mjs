@@ -188,3 +188,12 @@ export function stats() {
     events7d: one("SELECT COUNT(*) AS n FROM events WHERE created_at > ?", since),
   };
 }
+
+/* ── 保留期：反馈与事件最多 12 个月，过期会话一并清掉 ── */
+export function purgeOld() {
+  const cut = Date.now() - 365 * DAY;
+  const f = db.prepare("DELETE FROM feedback WHERE created_at < ?").run(cut).changes;
+  const e = db.prepare("DELETE FROM events WHERE created_at < ?").run(cut).changes;
+  const s = db.prepare("DELETE FROM sessions WHERE expires_at < ?").run(Date.now()).changes;
+  return { feedback: Number(f || 0), events: Number(e || 0), sessions: Number(s || 0) };
+}

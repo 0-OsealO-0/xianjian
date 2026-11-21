@@ -21,6 +21,21 @@
   /* ── 服务探测 + 当前用户 ── */
   window.XJ_ACCOUNT = { me: null, stats: null, busy: false, msg: "", rating: 0, scope: "" };
 
+  /* 数据怎么用：一段成文说明，挂在页面上，不用去翻别的文件 */
+  function privacyBlock() {
+    return '<details class="card privacy"><summary>数据是怎么用的（点开看细节）</summary>'
+      + '<div class="small">'
+      + '<p><b>收什么</b>：邮箱、密码哈希（scrypt，不可逆）、你写的反馈、以及「完成到第几件」的计数。</p>'
+      + '<p><b>不收什么</b>：IP（只在内存里做 1 分钟限流，不写库）、设备型号、浏览记录、'
+      + '你输入的代码/笔记/想法（那些只在你这台电脑上）。</p>'
+      + '<p><b>存多久</b>：反馈 ≤ 12 个月；账号存到你删号；登录令牌 30 天过期。</p>'
+      + '<p><b>谁能看</b>：你只看得到自己的；管理员能在 <code>/admin.html</code> 看汇总与反馈（含邮箱，便于回访）；'
+      + '其他人什么都看不到。</p>'
+      + '<p><b>怎么撤回</b>：关闭同意 → 立刻停止写入；删除账号 → 级联删掉反馈、会话与事件，不可恢复。</p>'
+      + '<p class="muted">试用版不收集敏感信息，也请不要写别人的隐私。</p>'
+      + '</div></details>';
+  }
+
   async function loadMe() {
     if (!ONLINE) return;
     const j = await api("/api/me");
@@ -46,7 +61,7 @@
         + '<label class="lbl">邮箱</label><input class="input" id="ac-mail" type="email" autocomplete="username" placeholder="you@seu.edu.cn">'
         + '<label class="lbl">密码（至少 8 位）</label><input class="input" id="ac-pw" type="password" autocomplete="current-password" placeholder="不会明文保存，只存 scrypt 哈希">'
         + '<label class="consent"><input type="checkbox" id="ac-ok"> <span>我同意把<strong>邮箱、我写的反馈、以及「完成到第几件事」的计数</strong>保存在你这台服务器上，用于改进这个工具。</span></label>'
-        + '<p class="small muted">不记录：IP、设备型号、浏览记录、你输入的任何学习内容。随时可以在本页关闭同意或删除账号。</p>'
+        + '<p class="small muted">不记录：IP、设备型号、浏览记录、你输入的任何学习内容。反馈最多存 12 个月，账号存到你删号为止。随时可以在本页关闭同意或删除账号。</p>'
         + (A.msg ? '<p class="err">' + A.msg + "</p>" : "")
         + '<div class="foot tight"><button class="btn primary" data-act="register">注册并登录</button>'
         + '<button class="btn" data-act="login">已有账号，登录</button></div></div>'
@@ -60,6 +75,7 @@
       + "关闭后立即停止写入，已写的可以用下面的「删号」清空。</p>"
       + '<div class="foot tight"><button class="btn ' + (A.me.consented ? "" : "primary") + '" data-act="consent" data-v="' + (A.me.consented ? "0" : "1") + '">'
       + (A.me.consented ? "关闭同意" : "开启同意") + "</button></div></div>"
+      + privacyBlock()
       + '<div class="card"><p class="muted small">留一条反馈</p>'
       + '<label class="lbl">这一步（可不填）</label><input class="input" id="fb-scope" placeholder="例如：自己把 BPSK 画一遍">'
       + '<label class="lbl">好用吗</label><div class="stars">'

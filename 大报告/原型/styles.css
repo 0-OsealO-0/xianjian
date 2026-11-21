@@ -519,3 +519,8 @@ ul.tight li, ol.tight li { font-size: 14.5px; line-height: 1.9; color: var(--ink
 }
 .star.on { background: var(--ink); color: #fff; border-color: var(--ink); }
 .foot.tight { margin-top: 10px; }
+
+details.privacy summary { cursor: pointer; font-weight: 600; }
+details.privacy[open] summary { margin-bottom: 8px; }
+details.privacy p { margin: 6px 0; line-height: 1.75; }
+details.privacy code { background: #f0ece4; padding: 1px 4px; border-radius: 3px; }

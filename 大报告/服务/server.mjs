@@ -20,6 +20,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { handleApi } from "./api.mjs";
+import { purgeOld } from "./store.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..", "原型");
 const PORT = Number(process.env.PORT || 8787);
@@ -178,6 +179,11 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify({ ok: false, reason: String(e && e.message ? e.message : e), items: [] }));
   }
 });
+
+try {
+  const r = purgeOld();
+  if (r.feedback || r.events || r.sessions) console.log("保留期清理：", JSON.stringify(r));
+} catch (e) { console.log("保留期清理跳过：", e.message); }
 
 server.listen(PORT, HOST, () => {
   console.log("先见 本地服务已启动： http://127.0.0.1:" + PORT + "/");

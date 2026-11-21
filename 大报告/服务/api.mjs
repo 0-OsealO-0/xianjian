@@ -120,6 +120,9 @@ function currentUser(req) {
 
 /* 返回 true 表示这个请求已被处理 */
 export async function handleApi(req, res, url) {
+    // /api/search 由 server.mjs 自己处理（B 站代理），这里放行
+    if (url.pathname === "/api/search") return false;
+
   const p = url.pathname;
   if (!p.startsWith("/api/")) return false;
 
