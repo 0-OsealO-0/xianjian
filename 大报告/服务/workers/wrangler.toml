@@ -1,0 +1,27 @@
+# 先见 · Cloudflare Workers 部署配置
+# 用法：
+#   1) npx wrangler login
+#   2) npx wrangler d1 create xianjian        # 记下返回的 database_id 填到下面对应位置
+#   3) npx wrangler d1 migrations apply xianjian --remote
+#   4) npx wrangler secret put ADMIN_TOKEN    # 自己想一串
+#   5) npx wrangler deploy
+
+name = "xianjian"
+main = "src/index.js"
+compatibility_date = "2026-11-22"
+workers_dev = true
+
+# 静态资源：把手机/电脑上看到的页面直接由 Workers 托管
+[assets]
+directory = "../../原型"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "xianjian"
+database_id = "在这里填 d1 create 返回的 id"
+
+[vars]
+# CONSENT_VERSION 与 大报告/服务/api.mjs 保持一致，改文案时一起改
+CONSENT_VERSION = "2026-11-22.v1"
