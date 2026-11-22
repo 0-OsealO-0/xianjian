@@ -494,8 +494,8 @@ function screenAbout() {
     + '<li><b>审查看过程，不看产出。</b>做完之后追问「为什么成立、哪里可能是错的」，答不上来的地方就是下次要补的地基。</li>'
     + '<li><b>交付的是诊断，不是分数。</b>这里没有正确率，只有「你现在缺哪一块」。</li>'
     + '</ol></div>'
-    + '<div class="callout">完整的设想、风险、以及它凭什么是现在——写在长文稿里（Markdown）。</div>'
-    + '<div class="foot"><a class="btn primary" href="项目构想_先见_v0.md" target="_blank" rel="noopener">打开完整长文稿 ↗</a>'
+    + '<div class="callout">完整的设想、风险、以及它凭什么是现在——都写在企划书里。</div>'
+    + '<div class="foot"><a class="btn primary" href="plan.html" target="_blank" rel="noopener">打开完整企划书 ↗</a>'
     + '<button class="btn" data-act="backFromAbout">返回</button></div>'
     + "</div>";
 }
