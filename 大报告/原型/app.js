@@ -44,7 +44,10 @@ function load() {
     const raw = localStorage.getItem(KEY) || localStorage.getItem(OLD_KEY);
     if (!raw) return JSON.parse(JSON.stringify(DEFAULT));
     const s = JSON.parse(raw);
-    return Object.assign(JSON.parse(JSON.stringify(DEFAULT)), s);
+    const st = Object.assign(JSON.parse(JSON.stringify(DEFAULT)), s);
+    /* 账号 / 进度 / 关于是「副页」，不该成为下次打开的落点 */
+    if (["account", "progress", "about"].indexOf(st.screen) >= 0) st.screen = "landing";
+    return st;
   } catch (e) {
     return JSON.parse(JSON.stringify(DEFAULT));
   }
@@ -1197,5 +1200,10 @@ window.XJ_BRIDGE = {
   },
   screen: function () {
     return S.screen;
+  },
+  go: function (name) {
+    S.screen = name;
+    save();
+    paint(true);
   },
 };

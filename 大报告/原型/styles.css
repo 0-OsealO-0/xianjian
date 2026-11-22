@@ -613,3 +613,7 @@ details.privacy code { background: #f0ece4; padding: 1px 4px; border-radius: 3px
 .fold[open] > summary::before { content: "▾ "; }
 .fold > summary:hover { color: var(--accent); }
 .fold .card { border: 0; background: transparent; padding: 6px 0 0; margin: 0; }
+
+/* 副页顶部：返回主页 + 状态 */
+.topnav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0 6px; }
+.topnav .small { white-space: nowrap; }

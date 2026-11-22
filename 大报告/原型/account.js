@@ -116,7 +116,10 @@
   /* ── 页面 ── */
   function screenAccount() {
     const A = XJ_ACCOUNT;
-    const head = '<div class="wrap narrow"><p class="kicker">账号 · 反馈</p>';
+    const head = '<div class="wrap narrow"><div class="topnav">'
+      + '<button class="btn tiny ghost" data-act="toLanding">← 回到主页</button>'
+      + '<span class="small muted">' + (A.me ? "已登录" : "还没有登录，也能用") + '</span></div>'
+      + '<p class="kicker">账号 · 反馈</p>';
 
     if (!ONLINE) {
       return head + '<h1>这一页要起本机服务才能用。</h1>'
@@ -227,6 +230,8 @@
       await pullMerge(true);
       if (A.me.consented) await pushNow(true);
       refreshAll();
+      /* 登录完不该把人留在账号页：回主页，主页上「继续 · xxx」就是进内容的入口 */
+      if (window.XJ_BRIDGE && window.XJ_BRIDGE.go) window.XJ_BRIDGE.go("landing");
       return;
     }
     if (act === "syncNow") {
@@ -248,6 +253,7 @@
     if (act === "logout") {
       await api("/api/logout", { method: "POST" });
       A.me = null; A.items = null; A.msg = "";
+      if (window.XJ_BRIDGE && window.XJ_BRIDGE.go) { window.XJ_BRIDGE.go("landing"); return; }
       paint(false);
       return;
     }
