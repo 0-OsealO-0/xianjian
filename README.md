@@ -16,18 +16,27 @@
 
 ## 跑起来
 
+**线上（国内可直连，无需梯子）**：<https://xianjian-production.up.railway.app/>
+- 托管：Railway 免费试用（30 天 / $5 额度），区域 US East
+- 数据库：Cloudflare D1（免费、持久），服务端直连 D1 的 HTTP API，所以免费实例重启也不丢数据
+- 反馈面板：<https://xianjian-production.up.railway.app/admin.html>（需要 `ADMIN_TOKEN`）
+- 为什么不放 Cloudflare Workers：`*.workers.dev` 在国内 DNS 被污染、IP 也不通；`*.vercel.app`、Netlify、Deno、Fly 同样不通
+
 ```bash
 # 1) 纯静态（不需要任何环境）
 双击 大报告/原型/index.html
 
-# 2) 带本机服务（就地搜 + 账号/反馈）
+# 2) 带本机服务（就地搜 + 账号/反馈，本机 SQLite）
 双击 大报告/启动服务.cmd
 # 或
 node 大报告/服务/server.mjs
 # 然后打开 http://127.0.0.1:8787/
+
+# 3) 用 D1 当数据层跑在本机（和线上同一套）
+CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… D1_DATABASE_ID=… node 大报告/服务/server.mjs
 ```
 
-需要 Node 22+（用到了内置的 `node:sqlite`）。
+需要 Node 22+（本机 SQLite 用内置 `node:sqlite`）；线上模式不需要 SQLite，只要 Node 18+ 能跑 fetch。
 
 ## 数据与隐私
 
