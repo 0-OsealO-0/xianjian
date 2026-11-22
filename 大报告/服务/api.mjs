@@ -45,6 +45,7 @@ import {
   touchUser,
   userBySession,
   usingD1,
+  updatePassword,
 } from "./store.mjs";
 
 export const CONSENT_VERSION = "2026-11-22.v1";
@@ -290,6 +291,25 @@ export async function handleApi(req, res, url) {
       return true;
     }
 
+
+    /* ── 改密码：要登录，要验旧密码，新密码 ≥ 8 位 ── */
+    if (req.method === "POST" && p === "/api/password") {
+      const { user } = await currentUser(req);
+      if (!user) return json(res, 401, { ok: false, reason: "先登录" }), true;
+      const body = await readBody(req);
+      const cur = String(body.current || "");
+      const next = String(body.next || "");
+      const { verifyPassword } = await import("./store.mjs");
+      const row = await findUserByEmail(user.email);
+      if (!row || !verifyPassword(cur, row.salt, row.hash)) {
+        return json(res, 403, { ok: false, reason: "当前密码不对" }), true;
+      }
+      if (next.length < 8) return json(res, 400, { ok: false, reason: "新密码至少 8 位" }), true;
+      if (next === cur) return json(res, 400, { ok: false, reason: "新密码和旧密码一样" }), true;
+      await updatePassword(user.id, next);
+      await addEvent(user.id, "password_change", null);
+      return json(res, 200, { ok: true }), true;
+    }
 
     /* ── 管理端（只给开发者）：需要 ADMIN_TOKEN，或从本机访问 ── */
     if (p.startsWith("/api/admin/")) {

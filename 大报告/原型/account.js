@@ -20,7 +20,7 @@
 
   /* ── 服务探测 + 当前用户 ── */
   window.XJ_ACCOUNT = {
-    me: null, stats: null, busy: false, msg: "", rating: 0, scope: "",
+    me: null, stats: null, busy: false, msg: "", pwMsg: "", rating: 0, scope: "",
     syncAt: 0, syncMsg: "", syncBusy: false,
   };
 
@@ -180,6 +180,13 @@
         : "")
       + '</details>'
 
+      + '<details class="fold"><summary>改密码</summary>'
+      + '<p class="small muted">改完这个账号的密码就换成新的了，其他设备上的登录不受影响。</p>'
+      + '<label class="lbl">当前密码</label><input class="input" id="pw-cur" type="password" placeholder="现在用的密码">'
+      + '<label class="lbl">新密码（至少 8 位）</label><input class="input" id="pw-new" type="password" placeholder="新的密码">'
+      + (A.pwMsg ? '<p class="' + (A.pwMsg.indexOf("✓") === 0 ? "okmsg" : "err") + '">' + A.pwMsg + "</p>" : "")
+      + '<div class="foot tight"><button class="btn primary" data-act="changePw">改密码</button></div></details>'
+
       + '<details class="fold"><summary>这台服务器上的汇总</summary>'
       + '<p class="small">注册 ' + (st.users || 0) + " 人 · 同意 " + (st.consented || 0) + " 人 · 反馈 "
       + (st.feedback || 0) + " 条 · 近 7 天活跃 " + (st.active7d || 0) + " 人</p>"
@@ -263,6 +270,18 @@
       refreshAll();
       return;
     }
+    if (act === "changePw") {
+      const cur = ($("pw-cur") || {}).value || "";
+      const next = ($("pw-new") || {}).value || "";
+      A.pwMsg = "";
+      if (!cur || !next) { A.pwMsg = "两个都要填"; paint(false); return; }
+      if (next.length < 8) { A.pwMsg = "新密码至少 8 位"; paint(false); return; }
+      const j = await api("/api/password", { method: "POST", body: JSON.stringify({ current: cur, next: next }) });
+      A.pwMsg = j && j.ok ? "✓ 改好了，下次用新密码登录" : ((j && j.reason) || "没改成，再试一次");
+      paint(false);
+      return;
+    }
+
     if (act === "delAccount") {
       if (!confirm("删除账号会同时删掉你留下的所有反馈，且不可恢复。确定？")) return;
       await api("/api/me", { method: "DELETE" });

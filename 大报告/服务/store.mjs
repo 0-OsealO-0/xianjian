@@ -167,6 +167,11 @@ export async function findUserById(id) {
   return rows[0] || null;
 }
 
+export async function updatePassword(userId, pw) {
+  const { salt, hash } = hashPassword(pw);
+  await q("UPDATE users SET salt = ?, hash = ? WHERE id = ?", [salt, hash, userId]);
+}
+
 export async function setConsent(userId, consented, consentVer) {
   if (consented) {
     await q("UPDATE users SET consented_at = ?, consent_ver = ? WHERE id = ?", [
