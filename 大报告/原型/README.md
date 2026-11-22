@@ -5,7 +5,7 @@
 
 ---
 
-## 一、这一版修的五件事
+## 一、这一版修的五件事（v0.7：讲解全覆盖 + 自带 key）
 
 | 你提的问题 | 现在的做法 |
 | --- | --- |
@@ -91,6 +91,15 @@ app.js            状态机：hello → intro → map → know → goal → task
 screenshots/      hello / intro / map / know / goal / task / feedback / finished / progress / mobile
 README.md         本文件
 ```
+
+### 站内讲解与「接我自己的模型」
+
+- `teach.js`（25 个高频知识点）+ `teach2.js`（其余 31 个，用 `Object.assign(window.TEACH, …)` 追加）→ **56 个知识点全覆盖**。每条约 4 段：`gist`（这一节在干嘛）、`steps`（分几步做）、`check`（三个自检）、`wrong`（最常见的坑），可选 `refs`（教材章节）。
+- `llm.js`：浏览器直连 **OpenAI 兼容**端点，默认 `https://api.deepseek.com` + `deepseek-chat`，可在「接我自己的模型」里改 base / model / key。
+  - key 存 `localStorage["xianjian.llm"]`，**不上传本站**；`LLM.clear()` 清除。
+  - 流式（SSE）逐字写入气泡；60 秒超时；错误已翻译成中文（401 / 跨域 / 超时）。
+  - 历史按任务存在 `S.chats[taskKey]`，发给模型时只带最近 6 条。
+- 想让讲解更准：改 `askContext(t)` 里的系统提示词；想让讲解更厚：改 `teach*.js`。
 
 ## 四、数据怎么改
 
