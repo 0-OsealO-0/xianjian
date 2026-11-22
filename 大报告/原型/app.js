@@ -48,6 +48,9 @@ function load() {
 }
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  try {
+    if (window.XJ_ACCOUNT && window.XJ_ACCOUNT.onLocalChange) window.XJ_ACCOUNT.onLocalChange();
+  } catch (e) {}
 }
 
 /* ───────── 任务链 ───────── */
@@ -860,3 +863,84 @@ if (S.screen === "task" || S.screen === "check" || S.screen === "feedback") {
 }
 paint(false);
 checkNet().then(function () { if (NET.ok) paint(false); });
+
+/* ───────── 跨设备同步：只同步结构性进度 ─────────
+   同步：完成到哪些任务、知识点标过什么、拿到哪些成就、专业/方向/年级/每周时长
+   不同步：你写的想法、留痕正文、答题原文（这些只在本机）
+*/
+const UNIT_RANK = { doing: 1, done: 2 };
+
+function syncSnapshot() {
+  return {
+    v: 2,
+    at: Date.now(),
+    profile: {
+      school: S.profile.school,
+      major: S.profile.major,
+      grade: S.profile.grade,
+      hours: S.profile.hours,
+    },
+    dir: S.dir || null,
+    units: Object.assign({}, S.units),
+    done: S.done.slice(),
+    achieved: (S.achieved || []).map(function (a) {
+      return { key: a.key || a.t, t: a.t, at: a.at };
+    }),
+  };
+}
+
+function syncMerge(remote) {
+  if (!remote || typeof remote !== "object") return { added: 0 };
+  let added = 0;
+
+  const units = remote.units || {};
+  Object.keys(units).forEach(function (k) {
+    const r = UNIT_RANK[units[k]] || 0;
+    const l = UNIT_RANK[S.units[k]] || 0;
+    if (r > l) {
+      S.units[k] = units[k];
+      added += 1;
+    }
+  });
+
+  (remote.done || []).forEach(function (k) {
+    if (typeof k === "string" && S.done.indexOf(k) < 0) {
+      S.done.push(k);
+      added += 1;
+    }
+  });
+
+  const have = {};
+  (S.achieved || []).forEach(function (a) {
+    if (a) have[a.key || a.t] = 1;
+  });
+  (remote.achieved || []).forEach(function (a) {
+    const k = a && (a.key || a.t);
+    if (k && !have[k]) {
+      S.achieved.push(a);
+      have[k] = 1;
+      added += 1;
+    }
+  });
+
+  if (!S.dir && remote.dir && DIR_BY_ID[remote.dir]) S.dir = remote.dir;
+  if (remote.profile) {
+    ["school", "major", "grade", "hours"].forEach(function (k) {
+      if (!S.profile[k] && remote.profile[k]) S.profile[k] = remote.profile[k];
+    });
+  }
+
+  save();
+  return { added: added };
+}
+
+window.XJ_BRIDGE = {
+  snapshot: syncSnapshot,
+  merge: syncMerge,
+  repaint: function () {
+    paint(false);
+  },
+  screen: function () {
+    return S.screen;
+  },
+};

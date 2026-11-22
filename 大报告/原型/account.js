@@ -19,7 +19,10 @@
   };
 
   /* ── 服务探测 + 当前用户 ── */
-  window.XJ_ACCOUNT = { me: null, stats: null, busy: false, msg: "", rating: 0, scope: "" };
+  window.XJ_ACCOUNT = {
+    me: null, stats: null, busy: false, msg: "", rating: 0, scope: "",
+    syncAt: 0, syncMsg: "", syncBusy: false,
+  };
 
   /* 数据怎么用：一段成文说明，挂在页面上，不用去翻别的文件 */
   function privacyBlock() {
@@ -36,10 +39,77 @@
       + '</div></details>';
   }
 
+  /* ── 进度同步（只同步结构性进度：任务、知识点、成就、专业/方向） ── */
+  let pushTimer = null;
+
+  function bridge() {
+    return window.XJ_BRIDGE || null;
+  }
+
+  async function pullMerge(quiet) {
+    const A = XJ_ACCOUNT;
+    const B = bridge();
+    if (!A.me || !B) return { added: 0 };
+    const j = await api("/api/progress");
+    if (!j || !j.ok) {
+      if (!quiet) A.syncMsg = (j && j.reason) || "拉取失败";
+      return { added: 0 };
+    }
+    A.syncAt = j.updated_at || 0;
+    const r = B.merge(j.data);
+    if (r.added > 0) {
+      B.repaint();
+      A.syncMsg = "已合并另一台设备上的 " + r.added + " 条进度";
+    } else if (!quiet) {
+      A.syncMsg = j.data ? "已经是最新的" : "云端还没有进度";
+    }
+    return r;
+  }
+
+  async function pushNow(quiet) {
+    const A = XJ_ACCOUNT;
+    const B = bridge();
+    if (!A.me || !B) return false;
+    if (!A.me.consented) {
+      if (!quiet) A.syncMsg = "需要先勾选同意，我才能保存进度";
+      return false;
+    }
+    A.syncBusy = true;
+    const j = await api("/api/progress", { method: "PUT", body: { data: B.snapshot() } });
+    A.syncBusy = false;
+    if (j && j.ok) {
+      A.syncAt = j.updated_at || Date.now();
+      A.syncMsg = "已同步 · " + timeOf(A.syncAt);
+      return true;
+    }
+    A.syncMsg = (j && j.reason) || "同步失败";
+    return false;
+  }
+
+  function onLocalChange() {
+    const A = XJ_ACCOUNT;
+    if (!A.me || !A.me.consented || !ONLINE || !bridge()) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(function () { pushNow(true); }, 1500);
+  }
+
+  function timeOf(ts) {
+    if (!ts) return "还没同步过";
+    const d = new Date(ts);
+    const pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    return d.getMonth() + 1 + "/" + d.getDate() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+
+  window.XJ_ACCOUNT.onLocalChange = onLocalChange;
+
   async function loadMe() {
     if (!ONLINE) return;
     const j = await api("/api/me");
-    if (j && j.ok) XJ_ACCOUNT.me = j.user;
+    if (j && j.ok) {
+      XJ_ACCOUNT.me = j.user;
+      await pullMerge(true);
+      if (XJ_ACCOUNT.me && XJ_ACCOUNT.me.consented) pushNow(true);
+    }
     paint(false);
   }
 
@@ -60,7 +130,7 @@
         + '<div class="card">'
         + '<label class="lbl">邮箱</label><input class="input" id="ac-mail" type="email" autocomplete="username" placeholder="you@seu.edu.cn">'
         + '<label class="lbl">密码（至少 8 位）</label><input class="input" id="ac-pw" type="password" autocomplete="current-password" placeholder="不会明文保存，只存 scrypt 哈希">'
-        + '<label class="consent"><input type="checkbox" id="ac-ok"> <span>我同意把<strong>邮箱、我写的反馈、以及「完成到第几件事」的计数</strong>保存在你这台服务器上，用于改进这个工具。</span></label>'
+        + '<label class="consent"><input type="checkbox" id="ac-ok"> <span>我同意把<strong>邮箱、我写的反馈，以及「学习进度」（做到哪一件、哪些知识点标过、专业与方向）</strong>保存在这台服务器上，用于改进这个工具和在换设备时接上。</span></label>'
         + '<p class="small muted">不记录：IP、设备型号、浏览记录、你输入的任何学习内容。反馈最多存 12 个月，账号存到你删号为止。随时可以在本页关闭同意或删除账号。</p>'
         + (A.msg ? '<p class="err">' + A.msg + "</p>" : "")
         + '<div class="foot tight"><button class="btn primary" data-act="register">注册并登录</button>'
@@ -71,11 +141,19 @@
     return head + '<h1>' + A.me.email + "</h1>"
       + '<p class="lede">' + (A.me.consented ? "你已同意数据用于改进这个工具。" : "你还没有同意数据用途——反馈暂时存不下来。") + "</p>"
       + '<div class="card"><p class="muted small">数据同意</p>'
-      + '<p class="small">开启后，我这边会收到：你写的反馈、你完成到第几件事的计数、注册时间。'
+      + '<p class="small">开启后，我这边会收到：你写的反馈、你的学习进度（做到哪一件、哪些知识点标过）、注册时间。'
       + "关闭后立即停止写入，已写的可以用下面的「删号」清空。</p>"
       + '<div class="foot tight"><button class="btn ' + (A.me.consented ? "" : "primary") + '" data-act="consent" data-v="' + (A.me.consented ? "0" : "1") + '">'
       + (A.me.consented ? "关闭同意" : "开启同意") + "</button></div></div>"
       + privacyBlock()
+      + '<div class="card"><p class="muted small">进度同步</p>'
+      + '<p class="small">登录后，做到哪一件、哪些知识点标过，会跟着账号走——换电脑或换手机接着做，不用重来。'
+      + "想法、留痕正文、答题原文不会上传。</p>"
+      + '<p class="small muted">最近一次：' + (A.syncAt ? timeOf(A.syncAt) : "还没同步过")
+      + (A.syncBusy ? " · 正在上传…" : "") + "</p>"
+      + (A.syncMsg ? '<p class="small">' + A.syncMsg + "</p>" : "")
+      + '<div class="foot tight"><button class="btn primary" data-act="syncNow">从云端拉一次</button>'
+      + '<button class="btn" data-act="pushNow">现在上传</button></div></div>'
       + '<div class="card"><p class="muted small">留一条反馈</p>'
       + '<label class="lbl">这一步（可不填）</label><input class="input" id="fb-scope" placeholder="例如：自己把 BPSK 画一遍">'
       + '<label class="lbl">好用吗</label><div class="stars">'
@@ -109,6 +187,9 @@
       S.screen = "account";
       paint(false);
       refreshAll();
+      if (XJ_ACCOUNT.me) {
+        pullMerge(true).then(function () { paint(false); });
+      }
       return;
     }
     if (act === "rate") {
@@ -124,7 +205,25 @@
       const j = await api("/api/" + act, { method: "POST", body: { email: mail, password: pw, consented: ok } });
       if (!j.ok) { A.msg = j.reason || "没成功"; paint(false); return; }
       A.me = j.user;
+      await pullMerge(true);
+      if (A.me.consented) await pushNow(true);
       refreshAll();
+      return;
+    }
+    if (act === "syncNow") {
+      A.syncBusy = true;
+      paint(false);
+      await pullMerge(false);
+      A.syncBusy = false;
+      paint(false);
+      return;
+    }
+    if (act === "pushNow") {
+      A.syncBusy = true;
+      paint(false);
+      await pushNow(false);
+      A.syncBusy = false;
+      paint(false);
       return;
     }
     if (act === "logout") {
@@ -135,7 +234,11 @@
     }
     if (act === "consent") {
       const j = await api("/api/consent", { method: "POST", body: { consented: b.dataset.v === "1" } });
-      if (j.ok) { A.me.consented = j.consented; A.msg = ""; }
+      if (j.ok) {
+        A.me.consented = j.consented;
+        A.msg = "";
+        if (j.consented) await pushNow(true);
+      }
       refreshAll();
       return;
     }

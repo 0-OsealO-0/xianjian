@@ -25,6 +25,8 @@ import {
   feedbackOf,
   listAllFeedback,
   findUserByEmail,
+  getProgress,
+  saveProgress,
   setConsent,
   stats,
   touchUser,
@@ -138,6 +140,33 @@ export async function handleApi(req, res, url) {
     if (p === "/api/stats") {
       json(res, 200, Object.assign({ ok: true, consent: CONSENT_VERSION }, await stats()));
       return true;
+    }
+
+    /* ── 学习进度（跨设备同步） ── */
+    if (p === "/api/progress") {
+      const { user } = await currentUser(req);
+      if (!user) return json(res, 401, { ok: false, reason: "先登录再同步" }), true;
+
+      if (req.method === "GET") {
+        const g = await getProgress(user.id);
+        return (
+          json(res, 200, { ok: true, data: g.data, updated_at: g.updated_at, consented: !!user.consented_at }),
+          true
+        );
+      }
+
+      if (req.method === "PUT" || req.method === "POST") {
+        if (!user.consented_at)
+          return json(res, 403, { ok: false, reason: "需要先勾选同意，我才能保存你的进度" }), true;
+        const body = await readBody(req);
+        const data = body && body.data;
+        if (!data || typeof data !== "object")
+          return json(res, 400, { ok: false, reason: "缺少 data" }), true;
+        const at = await saveProgress(user.id, data);
+        return json(res, 200, { ok: true, updated_at: at }), true;
+      }
+
+      return json(res, 405, { ok: false, reason: "不支持的方法" }), true;
     }
 
     /* ── 我 ── */

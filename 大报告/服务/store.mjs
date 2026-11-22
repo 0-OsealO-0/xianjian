@@ -57,6 +57,11 @@ const SCHEMA = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_feedback_at ON feedback(created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_events_at ON events(created_at)`,
+  `CREATE TABLE IF NOT EXISTS progress (
+    user_id    INTEGER PRIMARY KEY,
+    data       TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
   `CREATE INDEX IF NOT EXISTS idx_sessions_exp ON sessions(expires_at)`,
 ];
 
@@ -180,6 +185,7 @@ export async function touchUser(userId) {
 
 export async function deleteUser(userId) {
   await q("DELETE FROM sessions WHERE user_id = ?", [userId]);
+  await q("DELETE FROM progress WHERE user_id = ?", [userId]);
   await q("DELETE FROM feedback WHERE user_id = ?", [userId]);
   await q("DELETE FROM events WHERE user_id = ?", [userId]);
   await q("DELETE FROM users WHERE id = ?", [userId]);
@@ -275,4 +281,34 @@ export async function purgeOld() {
     events: Number(e.changes || 0),
     sessions: Number(s.changes || 0),
   };
+}
+
+/* ── 学习进度（跨设备同步；只存结构性进度，不存想法与笔记正文） ── */
+export async function saveProgress(userId, data) {
+  const now = Date.now();
+  const text = JSON.stringify(data || {});
+  const { rows } = await q("SELECT user_id FROM progress WHERE user_id = ?", [userId]);
+  if (rows.length) {
+    await q("UPDATE progress SET data = ?, updated_at = ? WHERE user_id = ?", [text, now, userId]);
+  } else {
+    await q("INSERT INTO progress (user_id, data, updated_at) VALUES (?,?,?)", [userId, text, now]);
+  }
+  return now;
+}
+
+export async function getProgress(userId) {
+  const { rows } = await q("SELECT data, updated_at FROM progress WHERE user_id = ?", [userId]);
+  const row = rows[0];
+  if (!row) return { data: null, updated_at: 0 };
+  let data = null;
+  try {
+    data = JSON.parse(row.data);
+  } catch {
+    data = null;
+  }
+  return { data, updated_at: Number(row.updated_at) || 0 };
+}
+
+export async function dropProgress(userId) {
+  await q("DELETE FROM progress WHERE user_id = ?", [userId]);
 }
