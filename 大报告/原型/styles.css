@@ -640,3 +640,17 @@ details.fold2[open] > summary::before { content: "▾ "; }
 .aibox.teach .lesson li { font-size: 13.5px; line-height: 1.75; color: var(--ink-2); }
 .aibox.teach .lesson.warn { border-left: 3px solid var(--amber); padding-left: 10px; }
 .aibox.teach .lesson.warn > b { color: var(--amber); }
+
+/* 追问区：自带 key 的对话 */
+.askbox { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.askrow { display: flex; gap: 8px; align-items: center; }
+.askrow .input { flex: 1; }
+.askmeta { display: flex; gap: 10px; align-items: center; margin: 8px 0 6px; flex-wrap: wrap; }
+.llmcfg { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 6px 0 10px; background: #fff; }
+.llmcfg label { display: block; margin: 6px 0 3px; }
+.llmcfg .input { width: 100%; margin-bottom: 2px; }
+.aichat { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow: auto; }
+.bubble { font-size: 13.5px; line-height: 1.75; padding: 8px 12px; border-radius: 10px; max-width: 92%; }
+.bubble.me { align-self: flex-end; background: #eef3ff; color: var(--ink); }
+.bubble.ai { align-self: flex-start; background: #fff; border: 1px solid var(--line); color: var(--ink-2); }
+.bubble.ai.err { background: #fdf1ef; border-color: #f0cfc9; color: var(--low); }

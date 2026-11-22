@@ -23,6 +23,8 @@ const DEFAULT = {
   versions: [],
   last: null,
   model: { base: "", key: "", name: "" },
+  askOpen: false,
+  chats: {},
 };
 
 let S = load();
@@ -495,7 +497,48 @@ function teachPanel(t) {
     + (L.steps && L.steps.length ? '<div class="lesson"><b>分 ' + L.steps.length + ' 步做</b><ol class="tight">' + list(L.steps) + "</ol></div>" : "")
     + (L.check && L.check.length ? '<div class="lesson"><b>你现在能回答这三个吗</b><ol class="tight">' + list(L.check) + "</ol></div>" : "")
     + (L.wrong ? '<div class="lesson warn"><b>最常见的坑</b><p>' + L.wrong + "</p></div>" : "")
+    + askUI(t)
     + "</div>";
+}
+
+function askContext(t) {
+  const L = teachFor(t);
+  return "你是学生的老师，不是代写作业的人。学生在做这一步：「" + t.t + "」。\n"
+    + "这一步要做的：" + (t.how || []).join("；") + "。\n"
+    + (t.why ? "为什么这一步重要：" + t.why + "\n" : "")
+    + "已经讲过的要点：" + L.gist + "\n"
+    + "要求：①只讲够这一步用的那一点，别展开成教科书；②先给一个能立刻动手的小例子；"
+    + "③用中文，别用「首先/其次/总之」这种腔调；④如果学生问的东西超出这一步，直接说「这一步先不用管，等做到 X 再说」。";
+}
+
+function askUI(t) {
+  const cfg = (window.LLM && window.LLM.get()) || { base: "", model: "", key: "" };
+  const has = !!(cfg.key && cfg.key.length > 6);
+  const chat = (S.chats && S.chats[t.key]) || [];
+  const bubbles = chat.map((m) =>
+    '<div class="bubble ' + (m.role === "user" ? "me" : "ai") + '">' + m.content.replace(/</g, "&lt;").replace(/\n/g, "<br>") + "</div>").join("");
+  return '<div class="askbox">'
+    + '<div class="askrow"><input id="askq" class="input" placeholder="不懂就问，例如：为什么这里要乘一个系数？">'
+    + '<button class="btn small primary" data-act="askSend">问</button></div>'
+    + '<div class="askmeta"><button class="btn tiny ghost" data-act="askCfg">' + (has ? "换个模型" : "接我自己的模型") + "</button>"
+    + '<span class="small muted">' + (has
+      ? "当前：" + cfg.model + "（key 只存在这台电脑上）"
+      : "还没接：填一次你自己的 API key，讲解就能直接对话；key 只存本机，不上传本站") + "</span></div>"
+    + (S.askOpen ? askCfgForm(cfg) : "")
+    + '<div class="aichat" id="aichat">' + bubbles + "</div>"
+    + "</div>";
+}
+
+function askCfgForm(cfg) {
+  return '<div class="llmcfg">'
+    + '<label class="small muted">接口地址（OpenAI 兼容）</label>'
+    + '<input id="llmBase" class="input" value="' + (cfg.base || "https://api.deepseek.com") + '">'
+    + '<label class="small muted">模型名</label>'
+    + '<input id="llmModel" class="input" value="' + (cfg.model || "deepseek-chat") + '">'
+    + '<label class="small muted">API key（只存本机）</label>'
+    + '<input id="llmKey" class="input" type="password" placeholder="sk-...">'
+    + '<div class="foot"><button class="btn small primary" data-act="askCfgSave">保存</button>'
+    + '<button class="btn small" data-act="askCfgClear">清除 key</button></div></div>';
 }
 
 function aiPanel(t) {
@@ -1022,6 +1065,48 @@ checkNet().then(function () { if (NET.ok) paint(false); });
       S.aiOpen = !S.aiOpen; paint(false); break;
     case "copyPrompt":
       S.promptOpen = !S.promptOpen; paint(false); break;
+    case "askCfg":
+      S.askOpen = !S.askOpen; paint(false); break;
+    case "askCfgSave": {
+      const b2 = document.getElementById("llmBase"), m2 = document.getElementById("llmModel"), k2 = document.getElementById("llmKey");
+      const key = (k2 && k2.value.trim()) || undefined;
+      window.LLM.set({ base: b2 && b2.value.trim(), model: m2 && m2.value.trim(), key: key });
+      S.askOpen = false; paint(false); break;
+    }
+    case "askCfgClear":
+      window.LLM.clear(); paint(false); break;
+    case "askSend": {
+      const q = document.getElementById("askq");
+      const text = q && q.value.trim();
+      if (!text) { if (q) q.focus(); break; }
+      const t2 = currentTask();
+      if (!t2) break;
+      const box = document.getElementById("aichat");
+      const chat = (S.chats[t2.key] = S.chats[t2.key] || []);
+      chat.push({ role: "user", content: text });
+      var ai = null;
+      if (box) {
+        const u = document.createElement("div");
+        u.className = "bubble me"; u.textContent = text; box.appendChild(u);
+        ai = document.createElement("div");
+        ai.className = "bubble ai"; ai.textContent = "…"; box.appendChild(ai);
+        box.scrollTop = box.scrollHeight;
+      }
+      if (q) q.value = "";
+      const messages = [{ role: "system", content: askContext(t2) }]
+        .concat(chat.slice(-6).map((m) => ({ role: m.role, content: m.content })));
+      window.LLM.ask(messages,
+        function (delta, full) { if (ai) { ai.textContent = full; box.scrollTop = box.scrollHeight; } },
+        function (full) {
+          chat.push({ role: "assistant", content: full });
+          save();
+          if (!full && ai) ai.textContent = "（模型没有返回内容）";
+        },
+        function (msg) {
+          if (ai) { ai.className = "bubble ai err"; ai.textContent = msg; }
+        });
+      break;
+    }
     case "closeAI":
       S.aiOpen = false; paint(false); break;
     case "copyAI": {

@@ -80,6 +80,12 @@ CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… D1_DATABASE_ID=… node 大�
 
 见 [`大报告/服务/部署.md`](大报告/服务/部署.md)。
 
+## 最近改动（v0.7）
+
+- **56 个知识点全有站内讲解**：`teach.js`（25 个高频）+ `teach2.js`（其余 31 个，`Object.assign` 追加），四段式：这一节在干嘛 / 分几步 / 三个自检 / 常见坑。
+- **接你自己的模型**：`llm.js` 直连 OpenAI 兼容端点（默认 `https://api.deepseek.com`，模型 `deepseek-chat`），流式回答；key 存 `localStorage["xianjian.llm"]`，不上传本站；`LLM.clear()` 一键清除。没配 key 时「问」按钮只提示去配置，不发请求。
+- 详见 `大报告/原型/README.md` 与企划书 §三。
+
 ## 最近改动（v0.6）
 
 - **每一步「直接看这些」**：知识点与步骤都配了具体条目（教材第几章 / 公开课 / 官方文档 + 怎么用），搜索链接降级为折叠项。数据在 `大报告/原型/data.js` 的 `COURSES_DB`、`SRC`、`STEP_SRC` 与 `teach.js` 的 `REFS`、`STEP_REFS`。
