@@ -1,0 +1,15 @@
+{
+  "name": "xianjian",
+  "version": "0.5.0",
+  "private": true,
+  "description": "先见 · 方向先行的学习引擎（东南大学《人工智能通识导论》创意作品）",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node 大报告/服务/server.mjs",
+    "dev": "node 大报告/服务/server.mjs",
+    "test": "node tools/test/api-smoke.mjs"
+  }
+}
