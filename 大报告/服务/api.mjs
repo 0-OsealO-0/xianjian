@@ -23,7 +23,7 @@ import {
   deleteUser,
   dropSession,
   feedbackOf,
-  listAllFeedback,
+  listAllFeedback, listUsers,
   findUserByEmail,
   getProgress,
   saveProgress,
@@ -284,6 +284,10 @@ export async function handleApi(req, res, url) {
       const local = (req.socket.remoteAddress || "").includes("127.0.0.1") || (req.socket.remoteAddress || "").includes("::1");
       if (token ? given !== token : !local) {
         json(res, 401, { ok: false, reason: "需要管理员令牌" });
+        return true;
+      }
+      if (p === "/api/admin/users") {
+        json(res, 200, { ok: true, users: await listUsers(200), stats: await stats() });
         return true;
       }
       if (p === "/api/admin/feedback") {

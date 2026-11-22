@@ -312,3 +312,36 @@ export async function getProgress(userId) {
 export async function dropProgress(userId) {
   await q("DELETE FROM progress WHERE user_id = ?", [userId]);
 }
+
+/* ── 管理端：谁登录过、各自学到哪（只给开发者看） ── */
+export async function listUsers(limit) {
+  const lim = Math.min(Math.max(Number(limit) || 200, 1), 500);
+  const { rows } = await q(
+    "SELECT u.id, u.email, u.consented_at, u.created_at, u.last_seen, p.data, p.updated_at " +
+    "FROM users u LEFT JOIN progress p ON p.user_id = u.id " +
+    "ORDER BY COALESCE(p.updated_at, u.last_seen, u.created_at) DESC LIMIT " + lim
+  );
+  return rows.map((r) => {
+    let p = null;
+    try { p = r.data ? JSON.parse(r.data) : null; } catch { p = null; }
+    const saves = (p && Array.isArray(p.saves)) ? p.saves : [];
+    const active = (p && p.activeSave) ? saves.filter((x) => x.id === p.activeSave)[0] : null;
+    const snap = (p && p.units) ? p : (active && active.snap ? active.snap : null);
+    const done = snap && Array.isArray(snap.done) ? snap.done.length : 0;
+    const units = snap && snap.units ? Object.keys(snap.units).length : 0;
+    const learned = snap && snap.units ? Object.keys(snap.units).filter((k) => snap.units[k] === "done").length : 0;
+    return {
+      id: r.id,
+      email: r.email,
+      consented: !!r.consented_at,
+      created_at: Number(r.created_at) || 0,
+      last_seen: Number(r.last_seen) || 0,
+      progress_at: Number(r.updated_at) || 0,
+      saves: saves.length,
+      dir: (snap && snap.dir) || null,
+      done,
+      units,
+      learned,
+    };
+  });
+}

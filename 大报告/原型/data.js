@@ -839,3 +839,12 @@ const COURSES_DB = [
 function coursesFor(unitId) {
   return COURSES_DB.filter((c) => (c.units || []).indexOf(unitId) >= 0).slice(0, 2);
 }
+
+/* ───────── 作者身份（卷首页、关于页、企划书页脚都用它） ───────── */
+window.AUTHOR = {
+  name: "0-OsealO-0",
+  role: "东南大学 · 电子信息类 · 大一 · 《人工智能通识导论》创意作品",
+  email: "3013910775@qq.com",
+  repo: "https://github.com/0-OsealO-0/xianjian",
+  note: "这个名字是我的 GitHub 账号；作品还在试用期，欢迎直接写信骂我哪里不好用。",
+};
