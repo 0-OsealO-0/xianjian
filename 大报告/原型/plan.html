@@ -73,7 +73,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <p><strong>入口与身份</strong></p>
 <ul>
 <li><strong>卷首页</strong>：站名「先见」+ 一句话定位 + 两个按钮（登录/注册、先随便看看）。首页不再堆功能，只做一件事——让人知道这是什么、下一步点哪。</li>
-<li><strong>账号</strong>：邮箱 + 密码（scrypt/PBKDF2 哈希），登录后进度跨设备；<strong>不勾同意就不上传</strong>任何东西。</li>
+<li><strong>账号</strong>：邮箱 + 密码（scrypt/PBKDF2 哈希），登录后进度跨设备；<strong>不勾同意就不上传</strong>任何东西。账号页是一张卡：登录/注册是唯一的主动作，数据用途、进度同步、留反馈、服务器汇总都收进折叠项，首屏只留一屏。</li>
 <li><strong>作者身份</strong>：页脚具名 + 联系邮箱 + 源码仓库，别人能找得到人。</li>
 </ul>
 <p><strong>学习主线</strong></p>
@@ -214,7 +214,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li><strong>v0.3</strong>：专业驱动（电子信息类 / 计算机类 / 其他专业）+ 专业介绍页 + 跨学科方向；长文稿入口；步骤条修正。</li>
 <li><strong>v0.3.1 / v0.3.3</strong>：编程语言路线（C/C++/Python/MATLAB/Java，按专业排序）；「留痕」；计算机类三条路各补到 4 步。</li>
 <li><strong>v0.4 / v0.4b / v0.4c</strong>：每件任务下面「去哪学」（看视频 / 读文档 / 抄代码）；人工策展 17 门 B 站课程；本机服务代理 B 站搜索（就地搜）。</li>
-<li><strong>v0.5（线上）</strong>：卷首页 + 常驻登录位 + 账号/跨设备同步 + 多存档 + 企划书成页 + 管理端「谁在用」+ 作者身份；部署上 Railway + Cloudflare D1。</li>
+<li><strong>v0.5（线上）</strong>：卷首页 + 常驻登录位 + 账号/跨设备同步 + 多存档 + 企划书成页 + 管理端「谁在用」+ 作者身份；部署上 Railway + Cloudflare D1；账号页收成「一张卡 + 折叠项」。</li>
 <li><strong>下一步</strong>：把规则判读换成真模型判读；任务完成度与知识点状态联动；教师/助教视图；换学校换专业只改一个数据文件。</li>
 </ul>
 <blockquote>发版检查表：①改完代码 ②更新本节与「三、现在做到哪」 ③跑 <code>python tools/md2plan.py</code> ④本机走一遍关键路径 ⑤推 GitHub，等 Railway 自动部署 ⑥线上验一遍版本号与 <code>/api/health</code>。</blockquote>

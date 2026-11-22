@@ -597,3 +597,19 @@ details.privacy code { background: #f0ece4; padding: 1px 4px; border-radius: 3px
 .app.solo #view > .wrap > .kicker { text-align: center; }
 .app.solo #view > .wrap > h1 { text-align: center; font-size: 28px; }
 .app.solo #view > .wrap > .lede { text-align: center; margin-left: auto; margin-right: auto; }
+
+/* 账号页：一张卡 + 折叠项 */
+.onecard { padding: 26px 26px 18px; }
+.onecard-h1 { font-family: var(--serif); font-size: 25px; margin: 4px 0 8px; text-align: center; }
+.onecard-sub { font-size: 13.5px; color: var(--muted); text-align: center; margin: 0 0 20px; line-height: 1.7; }
+.onecard-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
+.onecard-mail { font-size: 16px; word-break: break-all; }
+.onecard-top span { display: block; font-size: 12px; margin-top: 2px; }
+.onecard-foot { border-top: 1px dashed var(--line); margin-top: 14px; padding-top: 10px; text-align: center; }
+.fold { border-top: 1px dashed var(--line); margin-top: 14px; padding-top: 10px; }
+.fold > summary { cursor: pointer; font-size: 13px; color: var(--ink-2); list-style: none; padding: 4px 0; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::before { content: "▸ "; color: var(--muted); }
+.fold[open] > summary::before { content: "▾ "; }
+.fold > summary:hover { color: var(--accent); }
+.fold .card { border: 0; background: transparent; padding: 6px 0 0; margin: 0; }

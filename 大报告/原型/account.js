@@ -117,64 +117,74 @@
   function screenAccount() {
     const A = XJ_ACCOUNT;
     const head = '<div class="wrap narrow"><p class="kicker">账号 · 反馈</p>';
+
     if (!ONLINE) {
       return head + '<h1>这一页要起本机服务才能用。</h1>'
         + '<p class="lede">双击 <code>启动服务.cmd</code>，然后访问 <code>http://127.0.0.1:8787/</code>。'
         + "本机模式下所有数据都只在这台电脑上（localStorage），不会有账号，也不会上传。</p>"
         + '<div class="foot"><button class="btn" data-act="toProgress">回我的进度</button></div></div>';
     }
+
+    /* 未登录：一张卡，说明折叠在后面 */
     if (!A.me) {
-      return head + '<h1>先给自己留个账号。</h1>'
-        + '<p class="lede">有账号才能把反馈留在我这边，也才能在换设备时接上进度。'
-        + "不想注册也行——不登录照样能用全部功能，只是反馈只存在本机。</p>"
-        + '<div class="card">'
+      return head + '<div class="card onecard">'
+        + '<h1 class="onecard-h1">先给自己留个账号。</h1>'
+        + '<p class="onecard-sub">有账号才能把反馈留下、换设备接上进度；不登录也能用，只是都只在这台电脑上。</p>'
         + '<label class="lbl">邮箱</label><input class="input" id="ac-mail" type="email" autocomplete="username" placeholder="you@seu.edu.cn">'
-        + '<label class="lbl">密码（至少 8 位）</label><input class="input" id="ac-pw" type="password" autocomplete="current-password" placeholder="不会明文保存，只存 scrypt 哈希">'
-        + '<label class="consent"><input type="checkbox" id="ac-ok"> <span>我同意把<strong>邮箱、我写的反馈，以及「学习进度」（做到哪一件、哪些知识点标过、专业与方向）</strong>保存在这台服务器上，用于改进这个工具和在换设备时接上。</span></label>'
-        + '<p class="small muted">不记录：IP、设备型号、浏览记录、你输入的任何学习内容。反馈最多存 12 个月，账号存到你删号为止。随时可以在本页关闭同意或删除账号。</p>'
-        + (A.msg ? '<p class="err">' + A.msg + "</p>" : "")
+        + '<label class="lbl">密码（至少 8 位）</label><input class="input" id="ac-pw" type="password" autocomplete="current-password" placeholder="不会明文保存">'
+        + '<label class="consent"><input type="checkbox" id="ac-ok"> <span>我同意把<strong>邮箱、我写的反馈、以及学习进度（做到哪一件、标记过哪些知识点、专业与方向）</strong>存在这台服务器上，用来改进这个工具、并在换设备时接上进度。</span></label>'
+        + (A.msg ? '<p class="err">' + A.msg + '</p>' : '')
         + '<div class="foot tight"><button class="btn primary" data-act="register">注册并登录</button>'
-        + '<button class="btn" data-act="login">已有账号，登录</button></div></div>'
-        + '<div class="foot"><button class="btn ghost" data-act="toProgress">先不注册</button></div></div>';
+        + '<button class="btn" data-act="login">已有账号，登录</button></div>'
+        + privacyBlock()
+        + '<div class="foot tight"><button class="btn ghost" data-act="toProgress">先不注册，继续用</button></div>'
+        + '</div></div>';
     }
+
+    /* 已登录：一张卡 + 折叠项 */
     const st = A.stats || {};
-    return head + '<h1>' + A.me.email + "</h1>"
-      + '<p class="lede">' + (A.me.consented ? "你已同意数据用于改进这个工具。" : "你还没有同意数据用途——反馈暂时存不下来。") + "</p>"
-      + '<div class="card"><p class="muted small">数据同意</p>'
-      + '<p class="small">开启后，我这边会收到：你写的反馈、你的学习进度（做到哪一件、哪些知识点标过）、注册时间。'
-      + "关闭后立即停止写入，已写的可以用下面的「删号」清空。</p>"
+    return head + '<div class="card onecard">'
+      + '<div class="onecard-top"><div><b class="onecard-mail">' + A.me.email + '</b>'
+      + '<span class="small muted">' + (A.me.consented ? "已同意数据用于改进" : "还没同意数据用途") + '</span></div>'
+      + '<button class="btn small ghost" data-act="logout">退出</button></div>'
+
+      + '<p class="small muted">最近一次同步：' + (A.syncAt ? timeOf(A.syncAt) : "还没同步过")
+      + (A.syncBusy ? " · 正在上传…" : "") + '</p>'
+      + (A.syncMsg ? '<p class="small">' + A.syncMsg + '</p>' : '')
+      + '<div class="foot tight"><button class="btn primary" data-act="pushNow">现在上传</button>'
+      + '<button class="btn" data-act="syncNow">从云端拉一次</button></div>'
+
+      + '<details class="fold"><summary>数据同意（' + (A.me.consented ? "开" : "关") + '）</summary>'
+      + '<p class="small">开启后我这边会收到：你写的反馈、学习进度（做到哪一件、标过哪些知识点）、注册时间。关闭后立即停止写入。</p>'
       + '<div class="foot tight"><button class="btn ' + (A.me.consented ? "" : "primary") + '" data-act="consent" data-v="' + (A.me.consented ? "0" : "1") + '">'
-      + (A.me.consented ? "关闭同意" : "开启同意") + "</button></div></div>"
+      + (A.me.consented ? "关闭同意" : "开启同意") + '</button></div></details>'
+
       + privacyBlock()
-      + '<div class="card"><p class="muted small">进度同步</p>'
-      + '<p class="small">登录后，做到哪一件、哪些知识点标过，会跟着账号走——换电脑或换手机接着做，不用重来。'
-      + "想法、留痕正文、答题原文不会上传。</p>"
-      + '<p class="small muted">最近一次：' + (A.syncAt ? timeOf(A.syncAt) : "还没同步过")
-      + (A.syncBusy ? " · 正在上传…" : "") + "</p>"
-      + (A.syncMsg ? '<p class="small">' + A.syncMsg + "</p>" : "")
-      + '<div class="foot tight"><button class="btn primary" data-act="syncNow">从云端拉一次</button>'
-      + '<button class="btn" data-act="pushNow">现在上传</button></div></div>'
-      + '<div class="card"><p class="muted small">留一条反馈</p>'
+
+      + '<details class="fold"><summary>留一条反馈' + (A.items && A.items.length ? "（已留 " + A.items.length + " 条）" : "") + '</summary>'
       + '<label class="lbl">这一步（可不填）</label><input class="input" id="fb-scope" placeholder="例如：自己把 BPSK 画一遍">'
       + '<label class="lbl">好用吗</label><div class="stars">'
-      + [1, 2, 3, 4, 5].map((n) => '<button class="star ' + (A.rating >= n ? "on" : "") + '" data-act="rate" data-v="' + n + '">' + n + "</button>").join("")
-      + "</div>"
+      + [1, 2, 3, 4, 5].map(function (n) { return '<button class="star ' + (A.rating >= n ? "on" : "") + '" data-act="rate" data-v="' + n + '">' + n + "</button>"; }).join("")
+      + '</div>'
       + '<label class="lbl">哪里卡住 / 哪里不对（写一句也行）</label><textarea class="ta" id="fb-body" placeholder="例：第二步说『装个 Python』，但我不知道该用 conda 还是直接装"></textarea>'
       + (A.msg ? '<p class="' + (A.msg.indexOf("✓") === 0 ? "okmsg" : "err") + '">' + A.msg + "</p>" : "")
-      + '<div class="foot tight"><button class="btn primary" data-act="sendFeedback">发出去</button></div></div>'
-      + '<div class="card"><p class="muted small">我留下的反馈</p><div id="fb-list">'
+      + '<div class="foot tight"><button class="btn primary" data-act="sendFeedback">发出去</button></div>'
       + (A.items && A.items.length
-        ? '<ul class="minelist">' + A.items.map((f) => "<li><b>" + (f.scope || "（未指定）") + "</b>"
-          + '<span class="vmeta">' + new Date(f.created_at).toLocaleString("zh-CN") + (f.rating ? " · " + f.rating + " 分" : "") + "</span>"
-          + "<span>" + String(f.body).replace(/[<>]/g, "") + "</span></li>").join("") + "</ul>"
-        : '<p class="small muted">还没有。上面写一条试试。</p>')
-      + "</div></div>"
-      + '<div class="card"><p class="muted small">这台服务器上的汇总</p>'
+        ? '<ul class="minelist">' + A.items.map(function (f) {
+            return "<li><b>" + (f.scope || "（未指定）") + "</b>"
+              + '<span class="vmeta">' + new Date(f.created_at).toLocaleString("zh-CN") + (f.rating ? " · " + f.rating + " 分" : "") + "</span>"
+              + "<span>" + String(f.body).replace(/[<>]/g, "") + "</span></li>";
+          }).join("") + "</ul>"
+        : "")
+      + '</details>'
+
+      + '<details class="fold"><summary>这台服务器上的汇总</summary>'
       + '<p class="small">注册 ' + (st.users || 0) + " 人 · 同意 " + (st.consented || 0) + " 人 · 反馈 "
       + (st.feedback || 0) + " 条 · 近 7 天活跃 " + (st.active7d || 0) + " 人</p>"
-      + '<p class="small muted">这里只有数字，任何人的邮箱都不会出现在页面上。</p></div>'
-      + '<div class="foot"><button class="btn" data-act="logout">退出登录</button>'
-      + '<button class="btn ghost" data-act="delAccount">删除账号与我的数据</button></div></div>';
+      + '<p class="small muted">这里只有数字，任何人的邮箱都不会出现在页面上。</p></details>'
+
+      + '<div class="onecard-foot"><button class="btn ghost tiny" data-act="delAccount">删除账号与我的数据</button></div>'
+      + '</div></div>';
   }
 
   /* ── 事件 ── */
