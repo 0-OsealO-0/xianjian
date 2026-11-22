@@ -256,7 +256,7 @@ function syncUserbox() {
 
 function syncRail() {
   syncUserbox();
-  const solo = S.screen === "landing";
+  const solo = S.screen === "landing" || S.screen === "account";
   const app = document.querySelector(".app");
   if (app) app.classList.toggle("solo", solo);
   if (rail) rail.classList.toggle("min", S.screen === "landing" || S.screen === "about");

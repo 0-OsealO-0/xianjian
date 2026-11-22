@@ -591,3 +591,9 @@ details.privacy code { background: #f0ece4; padding: 1px 4px; border-radius: 3px
   .hero-h1 { font-size: 27px; line-height: 1.6; }
   .hero-mark { font-size: 24px; letter-spacing: .28em; }
 }
+
+/* 账号页也走「一屏居中」：没有侧栏，表单一列 */
+.app.solo #view > .wrap { max-width: 620px; margin: 7vh auto 50px; }
+.app.solo #view > .wrap > .kicker { text-align: center; }
+.app.solo #view > .wrap > h1 { text-align: center; font-size: 28px; }
+.app.solo #view > .wrap > .lede { text-align: center; margin-left: auto; margin-right: auto; }
