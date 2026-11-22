@@ -445,11 +445,13 @@ function resBlock(t) {
   const courseHtml2 = courses.map((c) =>
     '<li><a class="reslink" href="' + c.url + '" target="_blank" rel="noopener">' + c.title + ' ↗</a>'
     + '<span class="small muted"> · ' + c.by + (c.note ? " · " + c.note : "") + "</span></li>").join("");
-  const listHtml = (refHtml || courseHtml2 || docHtml)
-    ? '<p class="small muted" style="margin:0 0 4px">直接看这些</p><ul class="reflist">' + refHtml + courseHtml2 + docHtml + "</ul>"
-    : '<p class="small muted" style="margin:0">这一节还没有写好的书目章节，先用下面的搜索。</p>';
+  const ghHtml = r.gh ? '<li><a class="reslink" href="' + r.gh + '" target="_blank" rel="noopener">GitHub 搜「' + r.repo + '」↗</a> <span class="small muted">（找能直接跑的仓库，先看 README 的 quickstart）</span></li>' : "";
+  const curated = refHtml + courseHtml2 + docHtml + ghHtml;
+  const listHtml = curated
+    ? '<p class="small muted" style="margin:0 0 4px">直接看这些</p><ul class="reflist">' + curated + "</ul>"
+    : '<p class="small muted" style="margin:0 0 4px">这一步没有指定书目——它是动手任务，资源就是你要用的工具。关键词：<b>' + r.kw + "</b></p>";
   return '<div class="card"><p class="muted small">这一步的资源和讲解</p>' + listHtml
-    + '<details class="fold2"><summary>想自己再搜几门</summary>'
+    + '<details class="fold2"' + (curated ? "" : " open") + '><summary>想自己再搜几门 / 按关键词搜</summary>'
     + '<div class="resrow"><span class="rk">看视频</span>'
     + link(r.bili, "B 站搜「" + r.kw + "」（按播放量排）")
     + link(r.mooc, "中国大学 MOOC 搜「" + r.kw + "」") + "</div>"
