@@ -266,10 +266,12 @@ function syncRail() {
     { n: 2, t: "你现在到哪了", s: "学过什么，差在哪" },
     { n: 3, t: "手头这一件事", s: p ? p.done + "/" + p.all + " 件" : "做完再说下一步" },
   ];
+  const noHighlight = ["account", "progress", "about", "landing"].indexOf(S.screen) >= 0;
+  const activeIdx = noHighlight ? -1
+    : ["hello", "intro", "map"].indexOf(S.screen) >= 0 ? 0
+    : S.screen === "know" ? 1 : 2;
   rail.querySelector(".steps").innerHTML = items.map((it, i) => {
-    const active = ["hello", "intro", "about", "map"].indexOf(S.screen) >= 0 ? i === 0
-      : S.screen === "know" ? i === 1 : i === 2;
-    return '<li><button class="' + (active ? "on" : "") + '" data-act="nav" data-n="' + it.n + '">'
+    return '<li><button class="' + (i === activeIdx ? "on" : "") + '" data-act="nav" data-n="' + it.n + '">'
       + '<span class="num">' + it.n + '</span><span class="label">' + it.t + '</span></button></li>';
   }).join("");
 }
