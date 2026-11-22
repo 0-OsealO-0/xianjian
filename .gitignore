@@ -6,6 +6,13 @@ tmp_preview/
 # 数据库（不要提交真实反馈）
 大报告/服务/data/
 
+# 密钥：令牌、账号 ID、部署产物（绝不入库）
+.env
+*.env
+大报告/服务/workers/accounts.txt
+大报告/服务/workers/.wrangler/
+.wrangler/
+
 # 课程材料与个人作业（版权 + 隐私，不进仓库）
 课程材料/
 提取文本/
@@ -16,3 +23,6 @@ tools/
 # 系统
 .DS_Store
 Thumbs.db
+
+# Cloudflare 凭据（本机）
+大报告/服务/workers/cf.local.json

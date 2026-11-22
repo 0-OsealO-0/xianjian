@@ -29,6 +29,7 @@ import {
   stats,
   touchUser,
   userBySession,
+  usingD1,
 } from "./store.mjs";
 
 export const CONSENT_VERSION = "2026-11-22.v1";
@@ -113,9 +114,9 @@ function limited(req) {
 
 const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && s.length <= 120;
 
-function currentUser(req) {
+async function currentUser(req) {
   const token = parseCookies(req)[COOKIE];
-  return { token, user: userBySession(token) };
+  return { token, user: await userBySession(token) };
 }
 
 /* 返回 true 表示这个请求已被处理 */
@@ -129,21 +130,21 @@ export async function handleApi(req, res, url) {
   try {
     /* ── 健康检查 ── */
     if (p === "/api/health") {
-      json(res, 200, { ok: true, consent: CONSENT_VERSION, db: true });
+      json(res, 200, { ok: true, consent: CONSENT_VERSION, db: usingD1 ? "d1" : "sqlite" });
       return true;
     }
 
     /* ── 汇总数字（不含任何个人信息） ── */
     if (p === "/api/stats") {
-      json(res, 200, Object.assign({ ok: true, consent: CONSENT_VERSION }, stats()));
+      json(res, 200, Object.assign({ ok: true, consent: CONSENT_VERSION }, await stats()));
       return true;
     }
 
     /* ── 我 ── */
     if (p === "/api/me") {
-      const { user } = currentUser(req);
+      const { user } = await currentUser(req);
       if (!user) return json(res, 200, { ok: true, user: null }), true;
-      touchUser(user.id);
+      await touchUser(user.id);
       json(res, 200, {
         ok: true,
         user: {
@@ -162,13 +163,13 @@ export async function handleApi(req, res, url) {
       if (!isEmail(mail)) return json(res, 400, { ok: false, reason: "邮箱格式不对" }), true;
       if (String(password || "").length < 8)
         return json(res, 400, { ok: false, reason: "密码至少 8 位" }), true;
-      if (findUserByEmail(mail))
+      if (await findUserByEmail(mail))
         return json(res, 409, { ok: false, reason: "这个邮箱已经注册过了" }), true;
 
-      const id = createUser(mail, String(password), !!consented, CONSENT_VERSION);
-      const token = createSession(id);
+      const id = await createUser(mail, String(password), !!consented, CONSENT_VERSION);
+      const token = await createSession(id);
       setSession(res, req, token);
-      addEvent(id, "register", { consented: !!consented });
+      await addEvent(id, "register", { consented: !!consented });
       json(res, 200, { ok: true, user: { email: mail, consented: !!consented } });
       return true;
     }
@@ -177,39 +178,39 @@ export async function handleApi(req, res, url) {
       if (limited(req)) return json(res, 429, { ok: false, reason: "太频繁了，等一分钟再试" }), true;
       const { email, password } = await readBody(req);
       const mail = String(email || "").trim().toLowerCase();
-      const row = findUserByEmail(mail);
+      const row = await findUserByEmail(mail);
       const { verifyPassword } = await import("./store.mjs");
       if (!row || !verifyPassword(String(password || ""), row.salt, row.hash))
         return json(res, 401, { ok: false, reason: "邮箱或密码不对" }), true;
-      const token = createSession(row.id);
+      const token = await createSession(row.id);
       setSession(res, req, token);
-      touchUser(row.id);
-      addEvent(row.id, "login");
+      await touchUser(row.id);
+      await addEvent(row.id, "login");
       json(res, 200, { ok: true, user: { email: row.email, consented: !!row.consented_at } });
       return true;
     }
 
     if (req.method === "POST" && p === "/api/logout") {
-      const { token } = currentUser(req);
-      dropSession(token);
+      const { token } = await currentUser(req);
+      await dropSession(token);
       clearSession(res);
       json(res, 200, { ok: true });
       return true;
     }
 
     if (req.method === "POST" && p === "/api/consent") {
-      const { user } = currentUser(req);
+      const { user } = await currentUser(req);
       if (!user) return json(res, 401, { ok: false, reason: "先登录" }), true;
       const { consented } = await readBody(req);
-      setConsent(user.id, !!consented, CONSENT_VERSION);
-      addEvent(user.id, "consent", { consented: !!consented });
+      await setConsent(user.id, !!consented, CONSENT_VERSION);
+      await addEvent(user.id, "consent", { consented: !!consented });
       json(res, 200, { ok: true, consented: !!consented });
       return true;
     }
 
     /* ── 反馈 ── */
     if (req.method === "POST" && p === "/api/feedback") {
-      const { user } = currentUser(req);
+      const { user } = await currentUser(req);
       if (!user) return json(res, 401, { ok: false, reason: "先登录再留反馈" }), true;
       if (!user.consented_at)
         return json(res, 403, { ok: false, reason: "需要先勾选同意，我才能保存这条反馈" }), true;
@@ -217,30 +218,30 @@ export async function handleApi(req, res, url) {
       const text = String(body || "").trim();
       if (text.length < 2) return json(res, 400, { ok: false, reason: "写一句也行" }), true;
       if (text.length > 2000) return json(res, 400, { ok: false, reason: "太长了，2000 字以内" }), true;
-      const id = addFeedback({
+      const id = await addFeedback({
         userId: user.id,
         scope: String(scope || "").slice(0, 120),
         rating: (function (r) { return r >= 1 && r <= 5 ? Math.round(r) : null; })(Number(rating)),
         body: text,
       });
-      addEvent(user.id, "feedback", { id });
+      await addEvent(user.id, "feedback", { id });
       json(res, 200, { ok: true, id });
       return true;
     }
 
     if (req.method === "GET" && p === "/api/feedback") {
-      const { user } = currentUser(req);
+      const { user } = await currentUser(req);
       if (!user) return json(res, 401, { ok: false, reason: "先登录" }), true;
-      json(res, 200, { ok: true, items: feedbackOf(user.id) });
+      json(res, 200, { ok: true, items: await feedbackOf(user.id) });
       return true;
     }
 
     /* ── 删号 ── */
     if (req.method === "DELETE" && p === "/api/me") {
-      const { user, token } = currentUser(req);
+      const { user, token } = await currentUser(req);
       if (!user) return json(res, 401, { ok: false, reason: "先登录" }), true;
-      dropSession(token);
-      deleteUser(user.id);
+      await dropSession(token);
+      await deleteUser(user.id);
       clearSession(res);
       json(res, 200, { ok: true });
       return true;
@@ -257,7 +258,7 @@ export async function handleApi(req, res, url) {
         return true;
       }
       if (p === "/api/admin/feedback") {
-        const rows = listAllFeedback(200);
+        const rows = await listAllFeedback(200);
         if ((url.searchParams.get("format") || "") === "csv") {
           const head = "id,created_at,email,scope,rating,body\n";
           const csv = head + rows.map((r) =>
@@ -267,7 +268,7 @@ export async function handleApi(req, res, url) {
           res.end("\ufeff" + csv);
           return true;
         }
-        json(res, 200, { ok: true, items: rows, stats: stats() });
+        json(res, 200, { ok: true, items: rows, stats: await stats() });
         return true;
       }
       json(res, 404, { ok: false, reason: "没有这个接口" });

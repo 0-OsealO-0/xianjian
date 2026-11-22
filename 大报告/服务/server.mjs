@@ -20,7 +20,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { handleApi } from "./api.mjs";
-import { purgeOld } from "./store.mjs";
+import { init as initStore, purgeOld, usingD1 } from "./store.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..", "原型");
 const PORT = Number(process.env.PORT || 8787);
@@ -181,9 +181,13 @@ const server = http.createServer(async (req, res) => {
 });
 
 try {
-  const r = purgeOld();
+  const backend = await initStore();
+  console.log("数据层：" + backend + (usingD1 ? "（Cloudflare D1）" : "（本机 SQLite）"));
+  const r = await purgeOld();
   if (r.feedback || r.events || r.sessions) console.log("保留期清理：", JSON.stringify(r));
-} catch (e) { console.log("保留期清理跳过：", e.message); }
+} catch (e) {
+  console.log("数据层初始化失败：" + (e && e.message ? e.message : e));
+}
 
 server.listen(PORT, HOST, () => {
   console.log("先见 本地服务已启动： http://127.0.0.1:" + PORT + "/");
