@@ -231,19 +231,23 @@ function paint(scroll) {
     save();
   };
   const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let swapped = false;
+  const guardedSwap = () => { if (swapped) return; swapped = true; swap(); };
   if (document.startViewTransition && !vtBusy && !reduce) {
     vtBusy = true;
     try {
-      const t = document.startViewTransition(swap);
-      const done = () => { vtBusy = false; };
+      const t = document.startViewTransition(guardedSwap);
+      const done = () => { vtBusy = false; guardedSwap(); };
       if (t && t.finished && t.finished.then) t.finished.then(done, done);
       else done();
+      /* 兜底：转场被浏览器跳过/卡住时，800ms 后强制渲染一次，避免「点了没反应」 */
+      setTimeout(function () { if (!swapped) { vtBusy = false; guardedSwap(); after(); } }, 800);
     } catch (e) {
       vtBusy = false;
-      swap();
+      guardedSwap();
     }
   } else {
-    swap();
+    guardedSwap();
   }
   after();
 }
