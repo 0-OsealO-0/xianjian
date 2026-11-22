@@ -617,3 +617,8 @@ details.privacy code { background: #f0ece4; padding: 1px 4px; border-radius: 3px
 /* 副页顶部：返回主页 + 状态 */
 .topnav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0 6px; }
 .topnav .small { white-space: nowrap; }
+
+/* 每页顶部的返回条 */
+.pageback { display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; }
+.pageback .btn { color: var(--muted); }
+.pageback .btn:hover { color: var(--ink); background: #efe9dd; }

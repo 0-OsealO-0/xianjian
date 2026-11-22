@@ -302,6 +302,12 @@ function render() {
 
 /* ───────── 0. 卷首页 ───────── */
 
+/* 副页/内容页顶部的返回条：返回放在上面，不用滚到底才看见 */
+function pageBack(label, act) {
+  return '<div class="pageback"><button class="btn tiny ghost" data-act="'
+    + act + '">← ' + label + "</button></div>";
+}
+
 function screenLanding() {
   const me = (window.XJ_ACCOUNT && XJ_ACCOUNT.me) || null;
   const A = window.AUTHOR || { name: "先见", role: "", email: "", repo: "" };
@@ -366,6 +372,7 @@ function screenHello() {
 function screenIntro() {
   const m = MAJOR_BY_ID[S.profile.major] || MAJOR_LIST[0];
   return '<div class="wrap">'
+    + pageBack("回上一步", "backHello")
     + '<p class="kicker">' + m.name + '</p>'
     + '<h1 class="big">这个专业在解决的，是这类问题。</h1>'
     + '<p class="lede">' + m.pos + "</p>"
@@ -382,8 +389,7 @@ function screenIntro() {
     + '<p class="small muted">不必先选方向。把你现在想解的一个问题写下来（一句也行）——走完一条路之后，我们回来一起改它。</p>'
     + '<textarea class="input area" id="idea" placeholder="例如：我想知道为什么手机信号满格还是很慢">' + esc(S.idea) + "</textarea>"
     + '</div>'
-    + '<div class="foot"><button class="btn" data-act="backHello">上一步</button>'
-    + '<button class="btn primary" data-act="toMap">看看有哪些方向 →</button></div>'
+    + '<div class="foot"><button class="btn primary" data-act="toMap">看看有哪些方向 →</button></div>'
     + "</div>";
 }
 
@@ -485,6 +491,7 @@ function langPathBlock() {
 
 function screenAbout() {
   return '<div class="wrap">'
+    + pageBack("回到主页", "backFromAbout")
     + '<p class="kicker">关于这个产品</p>'
     + '<h1>它为什么长这样。</h1>'
     + '<p class="lede">一句话：把「基础课 → 专业课 → 实习 → 出路」这条路径倒过来——先让你看见方向，再让一个问题把知识拖出来。</p>'
@@ -508,6 +515,7 @@ function screenKnow() {
   const totalDone = Object.keys(S.units).filter((u) => S.units[u] === "done").length;
   const totalDoing = Object.keys(S.units).filter((u) => S.units[u] === "doing").length;
   return '<div class="wrap">'
+    + pageBack("回到方向", "toMap")
     + '<p class="kicker">第 2 步 · 你现在的进度</p>'
     + '<h1>你现在学到哪了？</h1>'
     + '<p class="lede">' + (S.dir ? '你选了「' + DIR_BY_ID[S.dir].name + '」。走这条路之前，先告诉我你学到哪了——差在哪，计划就补在哪。' : '不用勾整门课。高数修了一半就勾一半的知识点——差在哪，后面就补在哪。')
@@ -547,6 +555,7 @@ function unitRow(u) {
 
 function screenMap() {
   return '<div class="wrap">'
+    + pageBack("回到专业介绍", "toIntro")
     + '<p class="kicker">第 1 步 · 这个专业在忙什么</p>'
     + '<h1>这个专业有 ' + dirsOf(S.profile.major).length + ' 条路，先挑一条走。</h1>'
     + '<p class="lede">每条路都从「一件现在就能做的事」开始，不需要先修。挑一条，走完再换也不亏。</p>'
@@ -594,6 +603,7 @@ function screenGoal() {
   const first = currentTask();
   const e = estimate();
   return '<div class="wrap narrow">'
+    + pageBack("改我的进度", "toKnow")
     + '<p class="kicker">第 3 步 · 你的计划：' + d.name + '</p>'
     + '<h1>' + d.goal + '</h1>'
     + '<div class="card soft">'
@@ -621,6 +631,7 @@ function screenTask() {
   const p = progressOf();
   const n = p.done + 1;
   return '<div class="wrap narrow">'
+    + pageBack("回到计划", "toGoal")
     + '<div class="taskhead"><span class="kicker">第 ' + n + " 件 · 共 " + p.all + " 件</span>"
     + '<div class="dots">' + p.q.map((x, i) =>
       '<i class="' + (S.done.indexOf(x.key) >= 0 ? "on" : i === p.done ? "cur" : "") + '"></i>').join("") + "</div></div>"
@@ -652,12 +663,12 @@ function screenCheck() {
   const t = currentTask();
   if (!t || !t.ask) { S.screen = "task"; return screenTask(); }
   return '<div class="wrap narrow">'
+    + pageBack("回到这一件", "backTask")
     + '<p class="kicker">做完了，先别急着往下走</p>'
     + '<h1 class="q">' + t.ask.q + "</h1>"
     + '<p class="lede small">想到多少写多少，一句话也行。写得糙没关系，我要看的是你怎么想的。</p>'
     + '<textarea class="input area" id="ans" placeholder="我看到的 / 我的解释是……"></textarea>'
-    + '<div class="foot"><button class="btn" data-act="backTask">回去再看一眼</button>'
-    + '<button class="btn primary" data-act="submit">提交</button></div>'
+    + '<div class="foot"><button class="btn primary" data-act="submit">提交</button></div>'
     + '</div>';
 }
 
@@ -708,6 +719,7 @@ function screenFinished() {
   const d = DIR_BY_ID[S.dir] || {};
   const p = progressOf();
   return '<div class="wrap narrow">'
+    + pageBack("回到主页", "toLanding")
     + '<p class="kicker">走完了一条路</p>'
     + '<h1>' + d.name + "，你已经走完一遍。</h1>"
     + '<p class="lede">' + (d.unlock || "") + "</p>"
@@ -782,6 +794,7 @@ function screenProgress() {
   const p = S.dir ? progressOf() : { done: 0, all: 0, q: [] };
   const items = S.dir ? listedTasks() : [];
   return '<div class="wrap narrow">'
+    + pageBack("回到主页", "toLanding")
     + '<p class="kicker">我的进度</p>'
     + '<h1>' + (d ? d.name : "还没选方向") + "</h1>"
     + (d ? '<div class="card"><div class="goalrow"><span class="muted">已完成</span><b>' + p.done + " / " + p.all + "</b></div>"

@@ -76,6 +76,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li><strong>账号</strong>：邮箱 + 密码（scrypt/PBKDF2 哈希），登录后进度跨设备；<strong>不勾同意就不上传</strong>任何东西。账号页是一张卡：登录/注册是唯一的主动作，数据用途、进度同步、留反馈、服务器汇总都收进折叠项，首屏只留一屏。</li>
 <li><strong>作者身份</strong>：页脚具名 + 联系邮箱 + 源码仓库，别人能找得到人。</li>
 <li><strong>自助改密码</strong>：账号页「改密码」折叠项——验旧密码、新密码至少 8 位、不能和旧的一样；改完立刻生效，其他设备上的登录不受影响（不踢下线，避免误伤）。</li>
+<li><strong>返回都在顶部</strong>：每一页的「← 回到…」都放在标题上方左侧（回到主页 / 回到方向 / 改我的进度 / 回到计划 / 回到这一件），不用滚到页底才找到；页底只留「往前走」的动作。</li>
 <li><strong>打开就是主页</strong>：<code>account</code>/<code>progress</code>/<code>about</code> 是副页，不会被记成下次打开的落点；登录/注册/退出之后都回到主页，主页那颗大按钮就是「继续 · 你的邮箱」进内容；副页左上角常驻「← 回到主页」。</li>
 </ul>
 <p><strong>学习主线</strong></p>
@@ -221,6 +222,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li><strong>v0.5.1</strong>：管理员身份——作者邮箱登录即见管理端入口，管理端免令牌（会话校验），令牌作为后备。</li>
 <li><strong>v0.5.2</strong>：自助改密码（账号页折叠项 + <code>POST /api/password</code>，验旧密码、8 位下限、禁止与旧密码相同）。</li>
 <li><strong>v0.5.3</strong>：修「打开落在账号页 / 登录后卡在账号页」——副页不持久化、登录/注册/退出后回主页、副页加返回按钮。</li>
+<li><strong>v0.5.4</strong>：所有「返回」挪到页面顶部（<code>pageBack()</code>），页底只留向前动作。</li>
 <li><strong>下一步</strong>：把规则判读换成真模型判读；任务完成度与知识点状态联动；教师/助教视图；换学校换专业只改一个数据文件。</li>
 </ul>
 <blockquote>发版检查表：①改完代码 ②更新本节与「三、现在做到哪」 ③跑 <code>python tools/md2plan.py</code> ④本机走一遍关键路径 ⑤推 GitHub，等 Railway 自动部署 ⑥线上验一遍版本号与 <code>/api/health</code>。</blockquote>
