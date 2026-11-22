@@ -3,83 +3,106 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>先见 · 反馈面板（仅开发者）</title>
+<title>先见 · 管理端（仅作者）</title>
 <link rel="stylesheet" href="styles.css">
 <style>
   body { padding: 32px 20px; }
-  .wrap { max-width: 920px; margin: 0 auto; }
-  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
   th { font-weight: 600; color: var(--muted); font-size: 12px; }
   .sum { display: flex; gap: 24px; flex-wrap: wrap; margin: 12px 0 4px; }
   .sum b { font-size: 22px; font-family: var(--serif); }
-  .row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; margin: 14px 0; }
+  .who { font-size: 13px; color: var(--muted); }
+  h2 { font-size: 19px; margin: 28px 0 4px; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <p class="kicker">先见 · 反馈面板</p>
-  <h1 style="font-size:28px">试用反馈与使用量</h1>
-  <p class="lede">这里只有数字和用户自己写的反馈。没有 IP、没有浏览记录、没有学习内容。导出的 CSV 带邮箱——那是为了回访，不要外传。</p>
+  <p class="kicker">先见 · 管理端</p>
+  <h1 style="font-size:28px">谁在用、学得怎样</h1>
+  <p class="lede">这里只有「做到第几件、标了几个知识点、选哪条路」和你自己写的反馈；没有 IP、没有浏览记录、没有学习内容正文。导出的 CSV 带邮箱，别外传。</p>
 
-  <div class="row">
-    <input class="input" id="token" placeholder="管理员令牌（ADMIN_TOKEN；本机访问可留空）" style="max-width:420px">
+  <div class="row" id="tokrow">
+    <input class="input" id="token" placeholder="管理员令牌（用管理员邮箱登录后不需要这个）" style="max-width:420px">
     <button class="btn primary" id="go">读取</button>
-    <button class="btn" id="csv">导出 CSV</button>
+    <span class="who" id="who"></span>
   </div>
 
   <div id="sum" class="sum"></div>
 
-  <h2 style="font-size:20px;margin:28px 0 6px">谁在用</h2>
-  <p class="small muted" style="margin:0">按最近一次学习活动排序。这里只显示「做到第几件、标了几个知识点、选哪条路」，不显示想法与笔记正文。</p>
-  <div id="users"></div>
+  <h2>谁在用</h2>
+  <div id="users"><p class="small muted">读取中…</p></div>
 
-  <h2 style="font-size:20px;margin:30px 0 6px">反馈</h2>
+  <h2>反馈 <button class="btn tiny" id="csv" style="margin-left:8px">导出 CSV</button></h2>
   <div id="list"></div>
 </div>
+
 <script>
 const $ = (id) => document.getElementById(id);
-const token = () => sessionStorage.getItem("xj_admin") || $("token").value.trim();
-function esc(s) { return String(s == null ? "" : s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const DIRS = { comm: "通信与网络", dsp: "信号与信息处理", ic: "微电子与集成电路", em: "电磁场与微波", opto: "光电与显示", ai4ee: "智能信息处理", sys: "系统与网络", ml: "机器学习入门", gfx: "图形与交互", med: "AI+医疗影像", fin: "AI+金融风控", edu: "AI+教育", mfg: "AI+智能制造" };
 
-async function load() {
-  sessionStorage.setItem("xj_admin", $("token").value.trim());
-  const r = await fetch("/api/admin/feedback", { headers: { "x-admin-token": token() } });
-  const j = await r.json();
-  if (!j.ok) { $("list").innerHTML = '<p class="err">' + esc(j.reason) + "</p>"; return; }
-  const s = j.stats;
-  $("sum").innerHTML =
-    '<div><b>' + s.users + "</b><span class=\"small muted\"> 注册</span></div>" +
-    '<div><b>' + s.consented + "</b><span class=\"small muted\"> 同意</span></div>" +
-    '<div><b>' + s.feedback + "</b><span class=\"small muted\"> 反馈</span></div>" +
-    '<div><b>' + s.active7d + "</b><span class=\"small muted\"> 近 7 天活跃</span></div>";
-  try {
-    const ru = await fetch("/api/admin/users", { headers: { "x-admin-token": token() } });
-    const ju = await ru.json();
-    if (ju.ok) {
-      const dirName = (d) => ({ comm: "通信与网络", dsp: "信号与信息处理", ic: "微电子与集成电路", em: "电磁场与微波", opto: "光电与显示", ai4ee: "智能信息处理", sys: "系统与网络", ml: "机器学习入门", gfx: "图形与交互", med: "AI+医疗影像", fin: "AI+金融风控", edu: "AI+教育", mfg: "AI+智能制造" }[d] || (d || "还没选方向"));
-      $("users").innerHTML = "<table><thead><tr><th>邮箱</th><th>同意</th><th>方向</th><th>完成</th><th>知识点</th><th>存档</th><th>最近学习</th><th>注册</th></tr></thead><tbody>" +
-        ju.users.map((u) => "<tr><td>" + esc(u.email) + "</td><td>" + (u.consented ? "✓" : "—") + "</td><td>"
-          + esc(dirName(u.dir)) + "</td><td>" + u.done + "</td><td>" + u.learned + " / " + u.units + "</td><td>" + u.saves
-          + "</td><td>" + (u.progress_at ? new Date(u.progress_at).toLocaleString("zh-CN") : "—")
-          + "</td><td>" + new Date(u.created_at).toLocaleDateString("zh-CN") + "</td></tr>").join("") +
-        "</tbody></table>";
-    } else {
-      $("users").innerHTML = '<p class="small muted">用户列表读不出来：' + esc(ju.reason || "") + "</p>";
-    }
-  } catch (e) {
-    $("users").innerHTML = '<p class="small muted">用户列表读不出来。</p>';
-  }
+let TOKEN = sessionStorage.getItem("xj_admin") || "";
 
-  $("list").innerHTML = "<table><thead><tr><th>时间</th><th>邮箱</th><th>这一步</th><th>分</th><th>内容</th></tr></thead><tbody>" +
-    j.items.map((f) => "<tr><td>" + new Date(f.created_at).toLocaleString("zh-CN") + "</td><td>" + esc(f.email) + "</td><td>"
-      + esc(f.scope) + "</td><td>" + (f.rating == null ? "" : f.rating) + "</td><td>" + esc(f.body) + "</td></tr>").join("") +
-    "</tbody></table>";
+async function api(path) {
+  const r = await fetch(path, { headers: TOKEN ? { "x-admin-token": TOKEN } : {} });
+  if (r.status === 401) return { unauthorized: true };
+  return r.json();
 }
 
-$("go").onclick = load;
-$("csv").onclick = () => { location.href = "/api/admin/feedback?format=csv&token=" + encodeURIComponent(token()); };
-if (sessionStorage.getItem("xj_admin")) { $("token").value = sessionStorage.getItem("xj_admin"); load(); }
+function renderSum(s) {
+  $("sum").innerHTML =
+    '<div><b>' + s.users + '</b><span class="small muted"> 注册</span></div>' +
+    '<div><b>' + s.consented + '</b><span class="small muted"> 同意</span></div>' +
+    '<div><b>' + s.feedback + '</b><span class="small muted"> 反馈</span></div>' +
+    '<div><b>' + s.active7d + '</b><span class="small muted"> 近 7 天活跃</span></div>';
+}
+
+function renderUsers(users) {
+  if (!users || !users.length) { $("users").innerHTML = '<p class="small muted">还没有人注册。</p>'; return; }
+  $("users").innerHTML = "<table><thead><tr><th>邮箱</th><th>同意</th><th>方向</th><th>完成</th><th>知识点</th><th>存档</th><th>最近学习</th><th>注册</th></tr></thead><tbody>" +
+    users.map((u) => "<tr><td>" + esc(u.email) + "</td><td>" + (u.consented ? "✓" : "—") + "</td><td>"
+      + esc(DIRS[u.dir] || u.dir || "还没选方向") + "</td><td>" + u.done + "</td><td>" + u.learned + " / " + u.units + "</td><td>" + u.saves
+      + "</td><td>" + (u.progress_at ? new Date(u.progress_at).toLocaleString("zh-CN") : "—")
+      + "</td><td>" + new Date(u.created_at).toLocaleDateString("zh-CN") + "</td></tr>").join("") + "</tbody></table>";
+}
+
+function renderFeedback(items) {
+  if (!items || !items.length) { $("list").innerHTML = '<p class="small muted">还没有反馈。</p>'; return; }
+  $("list").innerHTML = "<table><thead><tr><th>时间</th><th>邮箱</th><th>这一步</th><th>分</th><th>内容</th></tr></thead><tbody>" +
+    items.map((f) => "<tr><td>" + new Date(f.created_at).toLocaleString("zh-CN") + "</td><td>" + esc(f.email) + "</td><td>"
+      + esc(f.scope) + "</td><td>" + (f.rating == null ? "" : f.rating) + "</td><td>" + esc(f.body) + "</td></tr>").join("") + "</tbody></table>";
+}
+
+async function boot() {
+  if (TOKEN) $("token").value = TOKEN;
+  const uj = await api("/api/admin/users");
+  if (uj.unauthorized) {
+    $("who").textContent = "需要管理员令牌";
+    $("users").innerHTML = '<p class="small muted">先在上面填入管理员令牌；或者用管理员邮箱登录本站后再打开这一页。</p>';
+    return;
+  }
+  $("tokrow").style.display = "none";
+  if (uj.stats) renderSum(uj.stats);
+  renderUsers(uj.users);
+  const fj = await api("/api/admin/feedback");
+  if (!fj.unauthorized) renderFeedback(fj.items);
+}
+
+$("go").onclick = async () => {
+  TOKEN = $("token").value.trim();
+  sessionStorage.setItem("xj_admin", TOKEN);
+  $("tokrow").style.display = "flex";
+  await boot();
+};
+
+$("csv").onclick = () => {
+  location.href = "/api/admin/feedback?format=csv" + (TOKEN ? "&token=" + encodeURIComponent(TOKEN) : "");
+};
+
+boot();
 </script>
 </body>
 </html>

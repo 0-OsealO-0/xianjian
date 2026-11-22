@@ -97,6 +97,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <ul>
 <li><strong>反馈</strong>：账号页可提交 1–5 星 + 一句话，须先勾同意。</li>
 <li><strong>管理端</strong> <code>/admin.html</code>：谁注册了、谁同意了、各自选了什么方向、做到第几件、标了几个知识点、几份存档、最近一次学习时间；反馈可导 CSV。</li>
+<li><strong>管理员身份</strong>：作者邮箱（<code>ADMIN_EMAILS</code> 配置）登录后，账号页直接出现「打开管理端 →」，进 <code>/admin.html</code> 不用再手输令牌；令牌方式仍保留，作为换设备或令牌轮换时的后备。</li>
 </ul>
 <blockquote><strong>现在还不行的</strong>：判读层是关键词规则（命中 ≥1/3 算接住），不理解语义；追问是写死的；时长是估算；模型接入、真·代码评测、教师端都还没有。</blockquote>
 <h2>四、和现有产品差在哪</h2>
@@ -215,6 +216,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li><strong>v0.3.1 / v0.3.3</strong>：编程语言路线（C/C++/Python/MATLAB/Java，按专业排序）；「留痕」；计算机类三条路各补到 4 步。</li>
 <li><strong>v0.4 / v0.4b / v0.4c</strong>：每件任务下面「去哪学」（看视频 / 读文档 / 抄代码）；人工策展 17 门 B 站课程；本机服务代理 B 站搜索（就地搜）。</li>
 <li><strong>v0.5（线上）</strong>：卷首页 + 常驻登录位 + 账号/跨设备同步 + 多存档 + 企划书成页 + 管理端「谁在用」+ 作者身份；部署上 Railway + Cloudflare D1；账号页收成「一张卡 + 折叠项」。</li>
+<li><strong>v0.5.1</strong>：管理员身份——作者邮箱登录即见管理端入口，管理端免令牌（会话校验），令牌作为后备。</li>
 <li><strong>下一步</strong>：把规则判读换成真模型判读；任务完成度与知识点状态联动；教师/助教视图；换学校换专业只改一个数据文件。</li>
 </ul>
 <blockquote>发版检查表：①改完代码 ②更新本节与「三、现在做到哪」 ③跑 <code>python tools/md2plan.py</code> ④本机走一遍关键路径 ⑤推 GitHub，等 Railway 自动部署 ⑥线上验一遍版本号与 <code>/api/health</code>。</blockquote>

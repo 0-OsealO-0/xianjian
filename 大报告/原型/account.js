@@ -147,6 +147,8 @@
       + '<div class="onecard-top"><div><b class="onecard-mail">' + A.me.email + '</b>'
       + '<span class="small muted">' + (A.me.consented ? "已同意数据用于改进" : "还没同意数据用途") + '</span></div>'
       + '<button class="btn small ghost" data-act="logout">退出</button></div>'
+      + (A.me.admin ? '<div class="foot tight"><a class="btn primary" href="admin.html">打开管理端 →</a>'
+        + '<span class="small muted">你是管理员，不用再输令牌</span></div>' : '')
 
       + '<p class="small muted">最近一次同步：' + (A.syncAt ? timeOf(A.syncAt) : "还没同步过")
       + (A.syncBusy ? " · 正在上传…" : "") + '</p>'

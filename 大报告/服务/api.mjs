@@ -15,6 +15,19 @@
    没有存 IP、没有存 UA、没有第三方脚本。
 */
 
+
+/* ── 谁是管理员：ADMIN_EMAILS（逗号分隔）或内置的默认作者邮箱 ── */
+const DEFAULT_ADMIN_EMAILS = ["3013910775@qq.com"];
+function adminEmails() {
+  const raw = process.env.ADMIN_EMAILS || "";
+  const list = raw.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  return list.length ? list : DEFAULT_ADMIN_EMAILS.map((x) => x.toLowerCase());
+}
+export function isAdminEmail(email) {
+  if (!email) return false;
+  return adminEmails().indexOf(String(email).trim().toLowerCase()) >= 0;
+}
+
 import {
   addEvent,
   addFeedback,
@@ -180,6 +193,7 @@ export async function handleApi(req, res, url) {
           email: user.email,
           consented: !!user.consented_at,
           created_at: user.created_at,
+          admin: isAdminEmail(user.email),
         },
       });
       return true;
@@ -282,8 +296,11 @@ export async function handleApi(req, res, url) {
       const token = process.env.ADMIN_TOKEN || "";
       const given = req.headers["x-admin-token"] || url.searchParams.get("token") || "";
       const local = (req.socket.remoteAddress || "").includes("127.0.0.1") || (req.socket.remoteAddress || "").includes("::1");
-      if (token ? given !== token : !local) {
-        json(res, 401, { ok: false, reason: "需要管理员令牌" });
+      const who = await currentUser(req);
+      const bySession = !!(who && who.user && isAdminEmail(who.user.email));
+      const byToken = !!token && given === token;
+      if (!bySession && !byToken && !(local && !token)) {
+        json(res, 401, { ok: false, reason: bySession ? "需要管理员令牌" : "需要管理员令牌，或用管理员邮箱登录" });
         return true;
       }
       if (p === "/api/admin/users") {
