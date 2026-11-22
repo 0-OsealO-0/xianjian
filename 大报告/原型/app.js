@@ -436,8 +436,18 @@ function resBlock(t) {
     '<div class="cr"><a class="crtitle" href="' + c.url + '" target="_blank" rel="noopener">' + c.title + '</a>'
     + '<span class="crumb">' + c.by + (c.kind === "search" ? " · 需自己挑一个" : "") + "</span>"
     + (c.note ? '<span class="crnote">' + c.note + "</span>" : "") + "</div>").join("");
-  return '<div class="card"><p class="muted small">去哪学（这一步的）</p>'
-    + (courseHtml ? '<div class="courses"><p class="small muted" style="margin:0 0 2px">人工筛过的</p>' + courseHtml + "</div>" : "")
+  const unitRefs = (window.REFS && window.REFS[t.unit || ""]) || ((window.TEACH && window.TEACH[t.unit || ""] && window.TEACH[t.unit || ""].refs) || []);
+  const refs = (unitRefs && unitRefs.length ? unitRefs : ((window.STEP_REFS && window.STEP_REFS[t.key]) || []));
+  const refHtml = refs.map((r) => "<li>" + r + "</li>").join("");
+  const docHtml = r.doc ? '<li><a class="reslink" href="' + r.doc.url + '" target="_blank" rel="noopener">' + r.doc.name + ' ↗</a> <span class="small muted">（官方文档，先读开头那节就够）</span></li>' : "";
+  const courseHtml2 = courses.map((c) =>
+    '<li><a class="reslink" href="' + c.url + '" target="_blank" rel="noopener">' + c.title + ' ↗</a>'
+    + '<span class="small muted"> · ' + c.by + (c.note ? " · " + c.note : "") + "</span></li>").join("");
+  const listHtml = (refHtml || courseHtml2 || docHtml)
+    ? '<p class="small muted" style="margin:0 0 4px">直接看这些</p><ul class="reflist">' + refHtml + courseHtml2 + docHtml + "</ul>"
+    : '<p class="small muted" style="margin:0">这一节还没有写好的书目章节，先用下面的搜索。</p>';
+  return '<div class="card"><p class="muted small">这一步的资源和讲解</p>' + listHtml
+    + '<details class="fold2"><summary>想自己再搜几门</summary>'
     + '<div class="resrow"><span class="rk">看视频</span>'
     + link(r.bili, "B 站搜「" + r.kw + "」（按播放量排）")
     + link(r.mooc, "中国大学 MOOC 搜「" + r.kw + "」") + "</div>"
@@ -450,10 +460,41 @@ function resBlock(t) {
       : '<span class="small muted">要就地搜，用本机服务打开：<code>node 服务/server.mjs</code>，再访问 http://127.0.0.1:8787/</span>')
     + "</div>"
     + vidResBlock(r.kw)
-    + '<div class="resrow airow"><span class="rk">找老师</span>'
-    + '<button class="btn small" data-act="aiTeacher">让 AI 讲这一节</button>'
-    + '<span class="small muted">会给你一段可以直接粘进 ChatGPT / DeepSeek 的提示词（含你的进度）</span></div>'
-    + (S.aiOpen ? aiPanel(t) : "")
+    + "</details>"
+    + '<div class="resrow airow"><span class="rk">问老师</span>'
+    + '<button class="btn small primary" data-act="aiTeacher">' + (S.aiOpen ? "收起讲解" : "站内讲一遍") + "</button>"
+    + '<button class="btn small" data-act="copyPrompt">' + (S.promptOpen ? "收起提示词" : "复制提示词去问真模型") + "</button></div>"
+    + (S.aiOpen ? teachPanel(t) : "")
+    + (S.promptOpen ? aiPanel(t) : "")
+    + "</div>";
+}
+
+function teachFor(t) {
+  const T = window.TEACH || {};
+  if (t.unit && T[t.unit]) return T[t.unit];
+  if (t.unit && typeof FIX !== "undefined" && FIX[t.unit]) {
+    const f = FIX[t.unit];
+    return { gist: f.why, steps: f.how,
+      check: ["这一块讲完后，你能举一个工程上的例子说明它用在哪吗？",
+        "如果只记住一句话，你会记哪句？",
+        "你打算用多久把这里第一个例子跑一遍？"],
+      wrong: "只看不写。这一块至少要有一个你自己敲出来的例子。" };
+  }
+  return { gist: t.why || "这一步的目标是先摸到东西，再回头看理论。", steps: t.how || [],
+    check: [t.ask ? t.ask.q : "你能把这一步的做法讲给同学听吗？",
+      "你刚才做的和书上的说法对得上吗？", "哪一步其实是你猜的？"],
+    wrong: "先查资料再动手。这一步应该反过来：先动手，卡住了再查。" };
+}
+
+function teachPanel(t) {
+  const L = teachFor(t);
+  const list = (arr) => (arr || []).map((x) => "<li>" + x + "</li>").join("");
+  return '<div class="aibox teach">'
+    + '<p class="small muted" style="margin:0 0 6px">站内讲解：内容是人写好的，不是模型即时生成；想追问就用右边的提示词去问真模型。</p>'
+    + '<div class="lesson"><b>先说清楚这一节在干嘛</b><p>' + L.gist + "</p></div>"
+    + (L.steps && L.steps.length ? '<div class="lesson"><b>分 ' + L.steps.length + ' 步做</b><ol class="tight">' + list(L.steps) + "</ol></div>" : "")
+    + (L.check && L.check.length ? '<div class="lesson"><b>你现在能回答这三个吗</b><ol class="tight">' + list(L.check) + "</ol></div>" : "")
+    + (L.wrong ? '<div class="lesson warn"><b>最常见的坑</b><p>' + L.wrong + "</p></div>" : "")
     + "</div>";
 }
 
@@ -978,7 +1019,9 @@ checkNet().then(function () { if (NET.ok) paint(false); });
       break;
     }
     case "aiTeacher":
-      S.aiOpen = true; paint(false); break;
+      S.aiOpen = !S.aiOpen; paint(false); break;
+    case "copyPrompt":
+      S.promptOpen = !S.promptOpen; paint(false); break;
     case "closeAI":
       S.aiOpen = false; paint(false); break;
     case "copyAI": {
