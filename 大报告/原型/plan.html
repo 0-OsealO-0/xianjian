@@ -34,9 +34,11 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <body>
 <header><b>先见</b><span style="color:var(--muted)">完整企划书</span><a href="index.html">← 回到网站</a><a href="项目构想_先见_v0.md" target="_blank">Markdown 原文</a></header>
 <main>
-<h1>先见 · 项目构想 v0.2</h1>
+<h1>先见 · 项目构想 v0.5</h1>
 <blockquote>一句话：<strong>先给学生一张方向地图，再用他自己的问题，把他拖回基础。</strong></blockquote>
 <blockquote>定位：一个内置于大模型 Agent 的本科学习引擎——不是课表，不是问答机器人，是一条学生自己跑得起来的路径。</blockquote>
+<blockquote></blockquote>
+<blockquote><strong>这份文档跟着版本走</strong>：每次上线新版本，必须同步下面「三、现在做到哪」和「十一、版本日志」，然后跑一遍 <code>python tools/md2plan.py</code> 重新生成站内的 <code>plan.html</code>。</blockquote>
 <p>---</p>
 <h2>一、我们要解决的问题</h2>
 <p>今天本科的默认路径是「基础课 → 专业课 → 实习 → 考研或就业」。问题不在某一门课，而在<strong>路径的形状</strong>：太长，也太窄。</p>
@@ -66,19 +68,37 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li><strong>考核产出是诊断，不是分数。</strong> 代做拿不到有用诊断，代做的动机就掉了——这是我们的反作弊机制，不是附加功能。</li>
 </ol>
 <p>---</p>
-<h2>三、v0.2 做了什么（现在就能看）</h2>
-<p><code>大报告/原型/</code> 是一个<strong>可直接双击打开</strong>的可交互原型（纯前端，无需安装、无需联网、无需 API Key）。v0.2 是按第一轮真实反馈重做的，核心变化是<strong>从"一次铺开整条路"改成"一次只给一件事"</strong>：</p>
+<h2>三、现在做到哪（v0.5，线上可访问）</h2>
+<p>线上地址：<code>https://xianjian-production.up.railway.app/</code>（Railway 免费试用 + Cloudflare D1 存数据；国内的网络环境下可直连）。</p>
+<p><strong>入口与身份</strong></p>
 <ul>
-<li><strong>六条路</strong>：通信与网络 / 信号与信息处理 / 微电子与集成电路 / 电磁场与微波 / 光电与显示 / 智能信息处理。每张卡只写「在解决什么问题」+「会用到哪些你还没学的知识」（按你的进度实时算）。</li>
-<li><strong>知识点粒度</strong>：14 门课、35 个知识点，每个可标「没学 / 在学 / 学过」——高数只学了极限就勾极限，不用勾整门课。</li>
-<li><strong>目标卡</strong>：一句目标 + 一共几件 + 按你的周投入估算几天 + <strong>只给第一件</strong>。不预演整条路。</li>
-<li><strong>任务级滚动</strong>：每件 20–60 分钟，带"为什么现在做它"和具体 3–4 步做法。做完立刻一道追问（写一句话即可），然后给"你刚刚拿到了什么"+ 进度 + 下一件。</li>
-<li><strong>缺什么插什么</strong>：任务里写了自己依赖哪些知识点；没学过就在前面自动插一条「补一块地基：随机变量与分布」。补完之后，后面的路径自动变短——<strong>计划是随状态现算的，不是写死的</strong>。</li>
-<li><strong>矩阵彩蛋</strong>：从"我到现在也没搞懂矩阵用来干什么"出发，矩阵在该专业真实出现的三个位置（DFT 矩阵、MIMO 信道矩阵的 SVD、卷积的 Toeplitz 形式）。</li>
-<li><strong>换屏不闪</strong>：用 View Transitions 做淡入；知识点的三态切换是就地改 class，不重绘整页。</li>
+<li><strong>卷首页</strong>：站名「先见」+ 一句话定位 + 两个按钮（登录/注册、先随便看看）。首页不再堆功能，只做一件事——让人知道这是什么、下一步点哪。</li>
+<li><strong>账号</strong>：邮箱 + 密码（scrypt/PBKDF2 哈希），登录后进度跨设备；<strong>不勾同意就不上传</strong>任何东西。</li>
+<li><strong>作者身份</strong>：页脚具名 + 联系邮箱 + 源码仓库，别人能找得到人。</li>
 </ul>
-<blockquote>现状边界：v0.2 的数据与流程是真的，<strong>判读层是关键词规则</strong>（命中 ≥1/3 算接住），不理解语义；模型接入在 v1。</blockquote>
-<p>---</p>
+<p><strong>学习主线</strong></p>
+<ul>
+<li><strong>六条工程方向</strong>：通信与网络 / 信号与信息处理 / 微电子与集成电路 / 电磁场与微波 / 光电与显示 / 智能信息处理。每张卡只写「在解决什么问题」和「会用到哪些你还没学的知识」（按你的进度实时算）。</li>
+<li><strong>跨学科入口</strong>：AI+医疗影像 / AI+金融风控 / AI+教育 / AI+智能制造，任何专业都能选。</li>
+<li><strong>知识点粒度</strong>：14 门专业课 + 4 门语言课，52 个知识点，三态（没学 / 在学 / 学过）——高数只学了极限就勾极限，不用勾整门课。</li>
+<li><strong>语言路线</strong>：C 4 块 → Python 5 块 → C++ 4 块 / MATLAB 3 块 / Java 4 块，按专业给出先学哪门、什么时候学、第一件做什么。</li>
+<li><strong>任务级滚动</strong>：每件 20–60 分钟，说明「为什么现在做它」+ 3–4 步具体做法；做完被追问一句，然后告诉你「刚刚拿到了什么」和下一件。</li>
+<li><strong>缺什么插什么</strong>：任务声明自己依赖哪些知识点，没学过就自动在前面插一条「补一块地基」；补完后面的路径自动变短——计划是现算的，不是写死的。</li>
+<li><strong>多存档</strong>：一个人可以同时保存「重来一次」「换条路试试」几份进度，随时切换，互不污染，跟着账号同步。</li>
+</ul>
+<p><strong>学会不会卡住</strong></p>
+<ul>
+<li><strong>去哪学</strong>：每件任务下面给「看视频 / 读文档 / 抄代码」三行，附人工筛过的 B 站课程（3Blue1Brown、MIT 18.06、翁恺 C、嵩天 Python、王道数据结构…）与官方文档直链；关键词按知识点写，不是把任务标题丢进搜索框。</li>
+<li><strong>就地搜</strong>：本机服务或线上服务会把 B 站搜索代理回来，直接给三条候选（标题/时长/播放量），一键收进「我收下的课」。</li>
+<li><strong>找老师</strong>：一键生成一段可直接粘进 ChatGPT / DeepSeek 的提示词，里面已写清这一步做什么、你已学过什么、要求只讲够用的那一点、并出三个自检问题。</li>
+<li><strong>留痕</strong>：动手那几件可以随手写一句（跑出的数字、截图里看到的东西），不打分，只让你下次翻回来知道做到哪了。</li>
+</ul>
+<p><strong>给作者看的</strong></p>
+<ul>
+<li><strong>反馈</strong>：账号页可提交 1–5 星 + 一句话，须先勾同意。</li>
+<li><strong>管理端</strong> <code>/admin.html</code>：谁注册了、谁同意了、各自选了什么方向、做到第几件、标了几个知识点、几份存档、最近一次学习时间；反馈可导 CSV。</li>
+</ul>
+<blockquote><strong>现在还不行的</strong>：判读层是关键词规则（命中 ≥1/3 算接住），不理解语义；追问是写死的；时长是估算；模型接入、真·代码评测、教师端都还没有。</blockquote>
 <h2>四、和现有产品差在哪</h2>
 <table><thead><tr><th></th><th>可汗学院 / Khanmigo</th><th>AI 家教类产品</th><th><strong>先见</strong></th></tr></thead><tbody>
 <tr><td>入口问题</td><td>"这道题怎么做"</td><td>"这个知识点怎么讲"</td><td><strong>"这个专业能做什么"</strong></td></tr>
@@ -187,6 +207,17 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li>别承诺"能提分"，承诺"能帮你想清楚要不要走这条路"。</li>
 <li>被问"和 ChatGPT 有什么区别"——答："ChatGPT 回答你的问题；这个先告诉你该问什么问题。"</li>
 </ol>
+<p>---</p>
+<h2>十一、版本日志（每次发版必须更新这一节）</h2>
+<ul>
+<li><strong>v0.2</strong>：一次只给一件事——目标卡、任务链、缺什么插什么；35 个知识点三态；六条方向卡。</li>
+<li><strong>v0.3</strong>：专业驱动（电子信息类 / 计算机类 / 其他专业）+ 专业介绍页 + 跨学科方向；长文稿入口；步骤条修正。</li>
+<li><strong>v0.3.1 / v0.3.3</strong>：编程语言路线（C/C++/Python/MATLAB/Java，按专业排序）；「留痕」；计算机类三条路各补到 4 步。</li>
+<li><strong>v0.4 / v0.4b / v0.4c</strong>：每件任务下面「去哪学」（看视频 / 读文档 / 抄代码）；人工策展 17 门 B 站课程；本机服务代理 B 站搜索（就地搜）。</li>
+<li><strong>v0.5（线上）</strong>：卷首页 + 常驻登录位 + 账号/跨设备同步 + 多存档 + 企划书成页 + 管理端「谁在用」+ 作者身份；部署上 Railway + Cloudflare D1。</li>
+<li><strong>下一步</strong>：把规则判读换成真模型判读；任务完成度与知识点状态联动；教师/助教视图；换学校换专业只改一个数据文件。</li>
+</ul>
+<blockquote>发版检查表：①改完代码 ②更新本节与「三、现在做到哪」 ③跑 <code>python tools/md2plan.py</code> ④本机走一遍关键路径 ⑤推 GitHub，等 Railway 自动部署 ⑥线上验一遍版本号与 <code>/api/health</code>。</blockquote>
 </main>
 <footer>这是课程作品《先见》的完整设想文档，用来解释它为什么这么设计、风险在哪、以及接下来准备怎么做。网站上的落地页只讲三句话，细节都在这里。</footer>
 </body>

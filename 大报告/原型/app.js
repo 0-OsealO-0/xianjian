@@ -256,6 +256,9 @@ function syncUserbox() {
 
 function syncRail() {
   syncUserbox();
+  const solo = S.screen === "landing";
+  const app = document.querySelector(".app");
+  if (app) app.classList.toggle("solo", solo);
   if (rail) rail.classList.toggle("min", S.screen === "landing" || S.screen === "about");
   const p = S.dir ? progressOf() : null;
   const items = [
@@ -297,12 +300,11 @@ function render() {
 function screenLanding() {
   const me = (window.XJ_ACCOUNT && XJ_ACCOUNT.me) || null;
   const A = window.AUTHOR || { name: "先见", role: "", email: "", repo: "" };
-  return '<div class="hero">'
-    + '<p class="kicker">东南大学 · 《人工智能通识导论》创意作品</p>'
-    + '<h1 class="hero-h1">先见</h1>'
-    + '<p class="hero-sub">先看清这个专业在忙什么，再决定学什么。</p>'
-    + '<p class="hero-lede">大多数人走的是「基础课 → 专业课 → 实习 → 出路」，到大三才第一次看清自己能做什么。'
-    + '这里把顺序倒过来：先给你一张方向地图，再给你一件现在就能做的事，缺什么就补什么。</p>'
+  return '<div class="lone">'
+    + '<div class="hero">'
+    + '<p class="hero-mark">先见</p>'
+    + '<h1 class="hero-h1">先看清这个专业在忙什么，<br>再决定学什么。</h1>'
+    + '<p class="hero-lede">大多数人到大三才第一次看清自己能做什么。这里把顺序倒过来：先给你一张方向地图，再给你一件现在就能做的事，缺什么补什么。</p>'
     + '<div class="hero-cta">'
     + (me
       ? '<button class="btn primary lg" data-act="toHello">继续 · ' + me.email.split("@")[0] + " →</button>"
@@ -310,23 +312,18 @@ function screenLanding() {
       : '<button class="btn primary lg" data-act="toAccount">登录 / 注册</button>'
       + '<button class="btn lg" data-act="toHello">先随便看看 →</button>')
     + "</div>"
-    + '<p class="small muted">' + (me ? "已登录，进度会跟着账号走，换设备接着做。" : "不登录也能用，进度只存在这台电脑上；登录后才能跨设备接上。") + "</p>"
+    + '<p class="hero-fine">' + (me ? "已登录，进度跟着账号走。" : "不登录也能用；登录后进度跟着账号走。") + "</p>"
     + "</div>"
-    + '<div class="hero-grid">'
-    + '<div class="card soft"><div class="ctitle">① 先看见方向</div><p class="small">六条工程方向，每条都从「一件现在就能做的事」开始——不是职业清单，是愿意先撞上去的问题。</p></div>'
-    + '<div class="card soft"><div class="ctitle">② 一次只给一件事</div><p class="small">不给你一张八周表格。做完这一件，我再告诉你下一件；缺的地基会当场插进来。</p></div>'
-    + '<div class="card soft"><div class="ctitle">③ 做完被追问</div><p class="small">「为什么成立、哪里可能是错的」——答不上来的地方，就是下一次要补的那一块。</p></div>'
-    + "</div>"
-    + '<footer class="sitefoot">'
-    + '<div><b>' + A.name + "</b>" + (A.role ? " · " + A.role : "") + "</div>"
-    + '<div>' + (A.email ? '联系：<a href="mailto:' + A.email + '">' + A.email + "</a>" : "") + "</div>"
-    + '<div class="links">'
-    + '<a href="plan.html" target="_blank" rel="noopener">完整企划书 ↗</a>'
+    + '<div class="lone-links">'
+    + '<a href="plan.html" target="_blank" rel="noopener">完整企划书</a>'
     + '<a data-act="toAbout">它为什么长这样</a>'
-    + (A.repo ? '<a href="' + A.repo + '" target="_blank" rel="noopener">源代码（GitHub）↗</a>' : "")
+    + (A.repo ? '<a href="' + A.repo + '" target="_blank" rel="noopener">源代码</a>' : "")
     + "</div>"
-    + '<p class="small muted">这是课程作品，还在试用期：数据只在你和这台服务器之间；不收集浏览记录与学习内容正文。</p>'
-    + "</footer>";
+    + '<div class="lone-foot">'
+    + "<span>" + A.name + (A.role ? " · " + A.role : "") + "</span>"
+    + (A.email ? '<a href="mailto:' + A.email + '">' + A.email + "</a>" : "")
+    + "</div>"
+    + "</div>";
 }
 
 function screenHello() {
