@@ -38,6 +38,10 @@ CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… D1_DATABASE_ID=… node 大�
 
 需要 Node 22+（本机 SQLite 用内置 `node:sqlite`）；线上模式不需要 SQLite，只要 Node 18+ 能跑 fetch。
 
+```bash
+npm test   # 接口冒烟测试：临时实例 + 临时库，不碰本机 app.db
+```
+
 ## 数据与隐私
 
 完整的说明见 [PRIVACY.md](PRIVACY.md)：收什么、不收什么、存多久、怎么删。
@@ -100,6 +104,10 @@ CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… D1_DATABASE_ID=… node 大�
 - **企划书成页**：`plan.html`，由 `tools/md2plan.py` 从 `大报告/项目构想_先见_v0.md` 生成（改完文稿跑一遍）。
 - **多存档**：「我的进度」里新建/切换/改名/删除存档，两条路互不干扰，跟着账号同步。
 - **管理端看人**：`/admin.html` 增加「谁在用」——邮箱、是否同意、方向、完成件数、知识点进度、存档数、最近学习时间（`/api/admin/users`，需 `ADMIN_TOKEN`）。
+
+## 参与开发
+
+想一起改这个项目：先读 [CONTRIBUTING.md](CONTRIBUTING.md)——怎么跑起来、按文件怎么分工、分支与 PR 规则、版本号与部署约定。
 
 ## 许可
 
