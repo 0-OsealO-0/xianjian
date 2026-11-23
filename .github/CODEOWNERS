@@ -1,0 +1,32 @@
+# CODEOWNERS · 按文件领地找对人 review
+#
+# 语法：<路径模式> <@GitHub用户名...>
+# 最后一条匹配的规则生效。把下面的占位用户名换成协作者真实的 GitHub 用户名，
+# 没填的行就用默认的 @0-OsealO-0。
+#
+# 分工说明见 CONTRIBUTING.md 第 3 节。
+
+# 默认：仓库维护者兜底
+*                               @0-OsealO-0
+
+# 流程 / 前端
+/大报告/原型/app.js             @0-OsealO-0
+/大报告/原型/index.html         @0-OsealO-0
+
+# 内容策展：电子信息（data.js）与其他专业（majors.js）分开，避免互相覆盖
+/大报告/原型/data.js            @0-OsealO-0
+/大报告/原型/majors.js          @0-OsealO-0
+
+# 讲解内容
+/大报告/原型/teach.js           @0-OsealO-0
+/大报告/原型/teach2.js          @0-OsealO-0
+
+# 设计
+/大报告/原型/styles.css         @0-OsealO-0
+
+# 服务端与数据层
+/大报告/服务/                   @0-OsealO-0
+
+# 协作与部署文档
+/CONTRIBUTING.md                @0-OsealO-0
+/.github/                       @0-OsealO-0
