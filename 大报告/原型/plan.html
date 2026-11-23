@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>先见 · 完整企划书</title>
 <style>
 :root { --paper:#f7f4ee; --card:#fffdf8; --ink:#1b1c1f; --ink2:#3b3f47; --muted:#6e7178; --line:#e3ddd1; --accent:#1f4fd8; --amber:#b4530a; --serif:"Source Han Serif SC","Noto Serif CJK SC",Songti SC,SimSun,Georgia,serif; }
@@ -20,15 +20,25 @@ p { margin:0 0 14px; color:var(--ink2); }
 strong { color:var(--ink); }
 code { background:#efe9dc; padding:1px 5px; border-radius:4px; font-size:13.5px; }
 pre { background:#26272b; color:#e8e6e1; padding:14px 16px; border-radius:10px; overflow:auto; font-size:13px; line-height:1.7; }
-table { width:100%; border-collapse:collapse; margin:14px 0 18px; font-size:14px; }
+.tablewrap { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:14px 0 18px; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+.tablewrap table { margin:0; min-width:560px; }
 th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
 th { background:#f2eee3; }
+hr { border:0; border-top:1px solid var(--line); margin:26px 0; }
 blockquote { margin:14px 0; padding:8px 14px; border-left:3px solid var(--amber); background:#faf6ec; color:var(--ink2); }
 ul, ol { margin:0 0 14px; padding-left:22px; color:var(--ink2); }
 li { margin:4px 0; }
 a { color:var(--accent); }
 footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; color:var(--muted); }
-@media (max-width:620px) { h1 { font-size:26px; } h2 { font-size:21px; } main { padding:20px 16px 70px; } }
+@media (max-width:620px) {
+  h1 { font-size:26px; }
+  h2 { font-size:21px; }
+  main { padding:20px 16px calc(70px + env(safe-area-inset-bottom)); }
+  header { padding:10px 14px; gap:10px; flex-wrap:wrap; font-size:12.5px; }
+  .tablewrap table { font-size:13px; }
+  th, td { padding:7px 8px; }
+}
 </style>
 </head>
 <body>
@@ -39,7 +49,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <blockquote>定位：一个内置于大模型 Agent 的本科学习引擎——不是课表，不是问答机器人，是一条学生自己跑得起来的路径。</blockquote>
 <blockquote></blockquote>
 <blockquote><strong>这份文档跟着版本走</strong>：每次上线新版本，必须同步下面「三、现在做到哪」和「十一、版本日志」，然后跑一遍 <code>python tools/md2plan.py</code> 重新生成站内的 <code>plan.html</code>。</blockquote>
-<p>---</p>
+<hr>
 <h2>一、我们要解决的问题</h2>
 <p>今天本科的默认路径是「基础课 → 专业课 → 实习 → 考研或就业」。问题不在某一门课，而在<strong>路径的形状</strong>：太长，也太窄。</p>
 <ul>
@@ -50,16 +60,16 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <p><strong>AI 改变了哪一环？</strong> 过去一个天马行空的想法，判断它可不可行代价极高：要么自己学完，要么等到遇见懂的人。现在可以把它交给 AI，拿到方案、被指出漏洞、甚至跑出一个粗糙原型。真正关键的是<strong>之后发生的事</strong>：为了看懂 AI 说了什么、错在哪里，学生必须回头补知识。这样的补，是被问题拖出来的，不是被课表推着走的。</p>
 <p>于是形成闭环：<strong>想法 → 验证 → 被证伪 → 补基础 → 调整想法 → 再验证</strong>。几轮下来，知识是自己长出来的，方向也是自己走出来的。</p>
 <p>这一步有实证支撑：PNAS 2025 一项近千名高中生的随机对照实验发现，无约束的 GPT-4 让练习时成绩提高 48%，但收走 AI 后考试反而比从未用过的人低 17%；而加了"只给提示、不给答案"的护栏后，练习成绩提高 127%，考试不再受损（Bastani et al., *PNAS* 2025, 10.1073/pnas.2422633122）。<strong>结论不是"AI 有害"，而是"护栏决定方向"</strong>——我们做的正是护栏那一侧。</p>
-<p>---</p>
+<hr>
 <h2>二、产品是什么</h2>
 <p><strong>先见</strong>是一个四步闭环的工具，可以做成网页，也可以做成嵌入 Agent 的技能/插件：</p>
-<table><thead><tr><th>步</th><th>名字</th><th>学生做什么</th><th>工具给什么</th></tr></thead><tbody>
+<div class="tablewrap"><table><thead><tr><th>步</th><th>名字</th><th>学生做什么</th><th>工具给什么</th></tr></thead><tbody>
 <tr><td>1</td><td><strong>看见地图</strong></td><td>输入学校、专业、年级、兴趣、已修课程</td><td>该专业 6 个真实方向：每个方向在解决什么问题、代表成果、需要的前置知识、对应课程、校内可对接的资源</td></tr>
 <tr><td>2</td><td><strong>你现在到哪了</strong></td><td>勾「学到哪了」——精确到知识点，不用勾整门课</td><td>三态进度（没学/在学/学过）+ 由此算出的知识缺口</td></tr>
 <tr><td>3</td><td><strong>手头这一件事</strong></td><td>只做当前这一件（20–60 分钟），做完点"做完了"</td><td>一件任务 + 为什么现在做它 + 怎么做 + 做完后的追问</td></tr>
 <tr><td>4</td><td><strong>被审查</strong></td><td>写一句话回答追问</td><td><strong>诊断而非打分</strong>：哪块接住了、哪块是空的、下一件是什么</td></tr>
 <tr><td>5</td><td><strong>回到想法</strong></td><td>改写/收窄/放弃原来的想法</td><td>自动记录版本链（v1 被推翻 → v2），把"证伪"沉淀成资产</td></tr>
-</tbody></table>
+</tbody></table></div>
 <p><strong>四条设计原则</strong>（决定了它和"AI 答疑工具"不是一类东西）：</p>
 <ol>
 <li><strong>先给地图，不给答案。</strong> 第一步永远不是"你要学什么"，而是"这个专业能做什么"。</li>
@@ -67,7 +77,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li><strong>审查看过程，不看产出。</strong> 输入是版本链、失败记录、决策改动的理由，而不是最后的报告。</li>
 <li><strong>考核产出是诊断，不是分数。</strong> 代做拿不到有用诊断，代做的动机就掉了——这是我们的反作弊机制，不是附加功能。</li>
 </ol>
-<p>---</p>
+<hr>
 <h2>三、现在做到哪（v0.5，线上可访问）</h2>
 <p>线上地址：<code>https://xianjian-production.up.railway.app/</code>（Railway 免费试用 + Cloudflare D1 存数据；国内的网络环境下可直连）。</p>
 <p><strong>入口与身份</strong></p>
@@ -108,14 +118,14 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 </ul>
 <blockquote><strong>现在还不行的</strong>：判读层是关键词规则（命中 ≥1/3 算接住），不理解语义；追问是写死的；时长是估算；模型接入、真·代码评测、教师端都还没有。</blockquote>
 <h2>四、和现有产品差在哪</h2>
-<table><thead><tr><th></th><th>可汗学院 / Khanmigo</th><th>AI 家教类产品</th><th><strong>先见</strong></th></tr></thead><tbody>
+<div class="tablewrap"><table><thead><tr><th></th><th>可汗学院 / Khanmigo</th><th>AI 家教类产品</th><th><strong>先见</strong></th></tr></thead><tbody>
 <tr><td>入口问题</td><td>"这道题怎么做"</td><td>"这个知识点怎么讲"</td><td><strong>"这个专业能做什么"</strong></td></tr>
 <tr><td>知识组织</td><td>按课程大纲</td><td>按知识点</td><td><strong>按方向与问题</strong></td></tr>
 <tr><td>考核</td><td>练习正确率</td><td>测验分数</td><td><strong>过程审查 → 诊断</strong></td></tr>
 <tr><td>结果</td><td>学会某章</td><td>提分</td><td><strong>长出一个自己的方向</strong></td></tr>
-</tbody></table>
+</tbody></table></div>
 <p>我们不做"更好的讲义"。我们做的是<strong>先让人看见地图</strong>——因为学生现在最缺的不是更清楚的讲解，而是一个能让他提前碰上矩阵的问题。</p>
-<p>---</p>
+<hr>
 <h2>五、技术架构</h2>
 <p><strong>v0.2（已完成）</strong>：静态前端（HTML/CSS/JS）+ JSON 数据层 + 任务链引擎 + 规则判读 + localStorage 存档。零依赖、可离线演示。</p>
 <p><strong>v1（目标形态）</strong>：</p>
@@ -138,9 +148,9 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li>审查必须<strong>双通道</strong>：模型追问 + 过程证据（版本链、提交记录、失败日志）。单靠模型的面试一定可被代答。</li>
 <li>计划生成要<strong>可解释</strong>：每一条都能回答"为什么这周学这个"。</li>
 </ul>
-<p>---</p>
+<hr>
 <h2>六、8 周 MVP 与里程碑</h2>
-<table><thead><tr><th>周</th><th>目标</th><th>交付物</th><th>验收标准</th></tr></thead><tbody>
+<div class="tablewrap"><table><thead><tr><th>周</th><th>目标</th><th>交付物</th><th>验收标准</th></tr></thead><tbody>
 <tr><td>1</td><td>方向图谱 v1</td><td>电子信息 6 方向 × 问题/知识/课程/资源</td><td>6 个方向数据齐全，能被他人复核</td></tr>
 <tr><td>2</td><td>画像与匹配</td><td>输入表单 → 方向推荐</td><td>3 个真实同学试用，推荐不至于离谱</td></tr>
 <tr><td>3</td><td>任务链引擎</td><td>按知识状态现算的下一步</td><td>改一个知识点的状态，下一步会跟着变</td></tr>
@@ -149,31 +159,31 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <tr><td>6</td><td>过程证据</td><td>版本链 + 提交记录接入</td><td>能区分"做过"和"没做过"的回答</td></tr>
 <tr><td>7</td><td>小程序/网页上线</td><td>可分享链接</td><td>手机端可用，加载 &lt; 2s</td></tr>
 <tr><td>8</td><td>小规模试点</td><td>5–10 人跑完一个完整闭环</td><td>至少 3 人产出可展示的项目雏形</td></tr>
-</tbody></table>
+</tbody></table></div>
 <p><strong>成功指标</strong>（不是 DAU）：完成一次完整闭环的人数、每人产出的项目数、审查诊断被学生认为"准确"的比例。</p>
-<p>---</p>
+<hr>
 <h2>七、招募：我们在找谁</h2>
 <p><strong>五个角色，可重叠，每周投入 4–8 小时</strong>：</p>
-<table><thead><tr><th>角色</th><th>要做什么</th><th>需要会</th><th>你会得到</th></tr></thead><tbody>
+<div class="tablewrap"><table><thead><tr><th>角色</th><th>要做什么</th><th>需要会</th><th>你会得到</th></tr></thead><tbody>
 <tr><td>前端</td><td>网页/小程序界面，把四步做成好用的东西</td><td>React 或原生 JS + CSS，愿意抠细节</td><td>一个真实上线的产品经历</td></tr>
 <tr><td>后端</td><td>图谱、计划生成、审查队列</td><td>Python/FastAPI，SQL，基本算法</td><td>图数据建模与 LLM 工程经验</td></tr>
 <tr><td>LLM/Agent</td><td>追问策略、护栏、诊断输出、RAG</td><td>Prompt 工程，了解 function calling</td><td>Agent 产品从 0 到 1 的完整链路</td></tr>
 <tr><td>教育研究</td><td>方向数据、审查标准、访谈与评估</td><td>愿意读文献、做访谈、写清楚</td><td>教育测量与定性研究的实操</td></tr>
 <tr><td>设计</td><td>信息架构、视觉、演示</td><td>Figma 或直接写 CSS</td><td>一份能放进作品集的 case</td></tr>
-</tbody></table>
+</tbody></table></div>
 <p><strong>我们提供</strong>：一个真实的选题（不是课程作业式的虚构需求）、可以写进简历的工程实践、每周一次 60 分钟的同步会、以及<strong>署名权</strong>——每个人的贡献都会在 README 与演示里明确标注。</p>
 <p><strong>我们在找的人不是"技术最强的"，而是"自己也想知道方向在哪的"</strong>——因为这个工具的第一个用户就是我们自己。</p>
-<p>---</p>
+<hr>
 <h2>八、风险与对策</h2>
-<table><thead><tr><th>风险</th><th>判断</th><th>对策</th></tr></thead><tbody>
+<div class="tablewrap"><table><thead><tr><th>风险</th><th>判断</th><th>对策</th></tr></thead><tbody>
 <tr><td>AI 考官可被代做</td><td>高，且是致命的</td><td>过程证据 + 出题评分分离 + 人类抽检 10% + 诊断而非打分</td></tr>
 <tr><td>基础空洞化</td><td>中高</td><td>每个项目强制附"知识依赖清单"，审查时检查是否闭合</td></tr>
 <tr><td>只服务优势学生</td><td>中</td><td>不选拔、只设投入门槛（公开过程 + 每周固定时长）；优先无导师资源、跨专业的学生</td></tr>
 <tr><td>学分与制度接口</td><td>高，但不紧急</td><td>三步走：工作坊 → 挂靠现有课程作业 → 学分认定试点。不把制度当前提</td></tr>
 <tr><td>方向漂移</td><td>中</td><td>每 4 周一次复盘，允许改方向，但要求写清"为什么改"</td></tr>
 <tr><td>课程成绩受影响</td><td>中低</td><td>基础知识总量有限，但必须有下限检查：每学期一次"基础体检"</td></tr>
-</tbody></table>
-<p>---</p>
+</tbody></table></div>
+<hr>
 <h2>九、与课程大报告的关系</h2>
 <p>这份构想同时是《人工智能通识导论》创意作品的选题。报告结构将按课程模板展开（项目概述 / 创意方案 / 作品形式 / 预期效果 / 团队协作 / 结论与展望），其中：</p>
 <ul>
@@ -183,7 +193,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li><strong>跨学科实践</strong>落到"教育学 × 电子信息 × 计算机"三条线；</li>
 <li>课程三大主义作为理论骨架：符号主义（方向知识图谱）、连接主义（迁移学习＝基础课是预训练）、行为主义（评价体系就是奖励函数，探索-利用困境）。</li>
 </ul>
-<p>---</p>
+<hr>
 <h2>十、下一步（本周）</h2>
 <ol>
 <li>把原型发给 3 个人，收集"哪一步看不懂"。</li>
@@ -191,7 +201,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li>招到 2 人（前端 + LLM）即可启动 v1。</li>
 </ol>
 <p>*文档 v0.2 · 2026-11 · 迭代中，欢迎直接在群里怼。*</p>
-<p>---</p>
+<hr>
 <h2>附：演示脚本（5 分钟，招人时照着讲）</h2>
 <p><strong>0:00–0:40 开场（一句痛点）</strong></p>
 <p>"我问你一个问题：你大三的时候，能不能说出你们专业在解决哪三个真问题？大多数人说不出。不是不努力，是路径太长——先学三年基础，才第一次看见方向。"</p>
@@ -215,7 +225,7 @@ footer { max-width:780px; margin:0 auto; padding:0 22px 60px; font-size:13px; co
 <li>别承诺"能提分"，承诺"能帮你想清楚要不要走这条路"。</li>
 <li>被问"和 ChatGPT 有什么区别"——答："ChatGPT 回答你的问题；这个先告诉你该问什么问题。"</li>
 </ol>
-<p>---</p>
+<hr>
 <h2>十一、版本日志（每次发版必须更新这一节）</h2>
 <ul>
 <li><strong>v0.2</strong>：一次只给一件事——目标卡、任务链、缺什么插什么；35 个知识点三态；六条方向卡。</li>

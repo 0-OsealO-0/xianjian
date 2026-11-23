@@ -2,29 +2,32 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>先见 · 先看清方向，再决定学什么</title>
-<link rel="stylesheet" href="styles.css?v=329">
+<link rel="stylesheet" href="styles.css?v=330">
 </head>
 <body>
 <div class="app">
   <aside class="rail" id="rail">
     <div class="brand"><b>先见</b><span>方向先行</span></div>
     <ul class="steps"></ul>
-    <div class="userbox" id="userbox"></div>
-    <div class="railfoot">
-      <button class="btn small" data-act="toProgress">我的进度</button>
-      <p>本地优先，勾选同意才上传</p>
+    <button class="railtoggle" type="button" data-act="railToggle" aria-expanded="false" aria-controls="railpanel">我的</button>
+    <div class="railpanel" id="railpanel">
+      <div class="userbox" id="userbox"></div>
+      <div class="railfoot">
+        <button class="btn small" data-act="toProgress">我的进度</button>
+        <p>本地优先，勾选同意才上传</p>
+      </div>
     </div>
   </aside>
   <main id="view"></main>
 </div>
-<script src="data.js?v=329"></script>
-  <script src="teach.js?v=329"></script>
-  <script src="teach2.js?v=329"></script>
-  <script src="llm.js?v=329"></script>
-  <script src="majors.js?v=329"></script>
-<script src="app.js?v=329"></script>
-<script src="account.js?v=329"></script>
+<script src="data.js?v=330"></script>
+  <script src="teach.js?v=330"></script>
+  <script src="teach2.js?v=330"></script>
+  <script src="llm.js?v=330"></script>
+  <script src="majors.js?v=330"></script>
+<script src="app.js?v=330"></script>
+<script src="account.js?v=330"></script>
 </body>
 </html>

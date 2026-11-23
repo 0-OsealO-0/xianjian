@@ -268,12 +268,18 @@ function syncRail() {
   const solo = S.screen === "landing" || S.screen === "account";
   const app = document.querySelector(".app");
   if (app) app.classList.toggle("solo", solo);
-  if (rail) rail.classList.toggle("min", S.screen === "landing" || S.screen === "about");
+  if (rail) {
+    rail.classList.toggle("min", S.screen === "landing" || S.screen === "about");
+    /* 换屏后收起「我的」面板，避免它盖住新页面 */
+    rail.classList.remove("open");
+    const tg = rail.querySelector(".railtoggle");
+    if (tg) tg.setAttribute("aria-expanded", "false");
+  }
   const p = S.dir ? progressOf() : null;
   const items = [
-    { n: 1, t: "看看这个专业", s: "先看见方向" },
-    { n: 2, t: "你现在到哪了", s: "学过什么，差在哪" },
-    { n: 3, t: "手头这一件事", s: p ? p.done + "/" + p.all + " 件" : "做完再说下一步" },
+    { n: 1, t: "看看这个专业", s: "先看见方向", ms: "看方向" },
+    { n: 2, t: "你现在到哪了", s: "学过什么，差在哪", ms: "看进度" },
+    { n: 3, t: "手头这一件事", s: p ? p.done + "/" + p.all + " 件" : "做完再说下一步", ms: "这一件" },
   ];
   const noHighlight = ["account", "progress", "about", "landing"].indexOf(S.screen) >= 0;
   const activeIdx = noHighlight ? -1
@@ -281,7 +287,8 @@ function syncRail() {
     : S.screen === "know" ? 1 : 2;
   rail.querySelector(".steps").innerHTML = items.map((it, i) => {
     return '<li><button class="' + (i === activeIdx ? "on" : "") + '" data-act="nav" data-n="' + it.n + '">'
-      + '<span class="num">' + it.n + '</span><span class="label">' + it.t + '</span></button></li>';
+      + '<span class="num">' + it.n + '</span><span class="label">' + it.t + '</span>'
+      + '<span class="mshort">' + it.ms + '</span></button></li>';
   }).join("");
 }
 
@@ -931,8 +938,21 @@ function screenProgress() {
 
 document.addEventListener("click", async (ev) => {
   const b = ev.target.closest("[data-act]");
+  /* 点面板外面收起面板 */
+  if (rail && rail.classList.contains("open") && !ev.target.closest("#rail")) {
+    rail.classList.remove("open");
+    const tg = rail.querySelector(".railtoggle");
+    if (tg) tg.setAttribute("aria-expanded", "false");
+  }
   if (!b) return;
   const act = b.dataset.act;
+
+  if (act === "railToggle") {
+    if (!rail) return;
+    const open = rail.classList.toggle("open");
+    b.setAttribute("aria-expanded", open ? "true" : "false");
+    return;
+  }
 
   /* 小选择器就地更新，不重绘整页（避免闪） */
   if (act === "grade" || act === "hours") {
@@ -1196,6 +1216,11 @@ document.addEventListener("change", (ev) => {
 /* 输入框回车也能提交 */
 document.addEventListener("keydown", (ev) => {
   if (ev.key === "Enter" && (ev.metaKey || ev.ctrlKey) && S.screen === "check") submitAnswer();
+  if (ev.key === "Escape" && rail && rail.classList.contains("open")) {
+    rail.classList.remove("open");
+    const tg = rail.querySelector(".railtoggle");
+    if (tg) tg.setAttribute("aria-expanded", "false");
+  }
 });
 
 function saveEvidence(t) {
