@@ -114,7 +114,8 @@ export async function init() {
   const { DatabaseSync } = await import("node:sqlite");
   const { mkdirSync } = await import("node:fs");
   const path = await import("node:path");
-  const DIR = path.join(import.meta.dirname, "data");
+  // 测试时用 XIANJIAN_DATA_DIR 指向临时目录，避免污染本机 app.db
+  const DIR = process.env.XIANJIAN_DATA_DIR || path.join(import.meta.dirname, "data");
   mkdirSync(DIR, { recursive: true });
   const db = new DatabaseSync(path.join(DIR, "app.db"));
   db.exec("PRAGMA journal_mode = WAL;");

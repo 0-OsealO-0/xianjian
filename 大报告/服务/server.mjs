@@ -19,7 +19,7 @@ import http from "node:http";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { handleApi } from "./api.mjs";
+import { handleApi, CONSENT_VERSION } from "./api.mjs";
 import { init as initStore, purgeOld, usingD1 } from "./store.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..", "原型");
@@ -157,7 +157,15 @@ const server = http.createServer(async (req, res) => {
   try {
     if (u.pathname === "/api/health") {
       res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify({ ok: true, cookie: !!cookie, port: PORT }));
+      res.end(
+        JSON.stringify({
+          ok: true,
+          cookie: !!cookie,
+          port: server.address().port,
+          db: usingD1 ? "d1" : "sqlite",
+          consent: CONSENT_VERSION,
+        })
+      );
       return;
     }
     if (await handleApi(req, res, u)) return;
@@ -190,7 +198,8 @@ try {
 }
 
 server.listen(PORT, HOST, () => {
-  console.log("先见 本地服务已启动： http://127.0.0.1:" + PORT + "/");
+  const actualPort = server.address().port;
+  console.log("先见 本地服务已启动： http://127.0.0.1:" + actualPort + "/");
   console.log("静态目录：" + ROOT);
   console.log("接口：/api/health  /api/search?kw=BPSK");
 });

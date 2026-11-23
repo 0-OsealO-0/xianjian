@@ -18,7 +18,12 @@ tmp_preview/
 提取文本/
 作业/
 作业图片/
-tools/
+
+# 本地工具与二进制（cloudflared.exe 等不入库）
+tools/*
+# 例外：协作者需要的计划书渲染器与冒烟测试
+!tools/md2plan.py
+!tools/test/
 
 # 系统
 .DS_Store

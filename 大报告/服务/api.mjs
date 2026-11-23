@@ -184,7 +184,7 @@ export async function handleApi(req, res, url) {
     }
 
     /* ── 我 ── */
-    if (p === "/api/me") {
+    if (req.method === "GET" && p === "/api/me") {
       const { user } = await currentUser(req);
       if (!user) return json(res, 200, { ok: true, user: null }), true;
       await touchUser(user.id);
