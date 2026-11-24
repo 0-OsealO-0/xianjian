@@ -1,7 +1,18 @@
 /* 先见 · 样式 v0.2
    一份能放在自习室桌上看的界面：纸色、衬线标题、不抢话的辅助信息。 */
 
+/* 标识专用的两个字：霞鹜文楷 Bold 取「先」「见」合并成一个 1KB 字体（SIL OFL，见 fonts/OFL.txt）。 */
+@font-face {
+  font-family: "XJ Logo";
+  src: url("./fonts/xj-logo.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
+  --serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --logo: "XJ Logo", "Source Han Serif SC", "Songti SC", serif;
   --paper: #f7f4ee;
   --card: #fffdf8;
   --ink: #1b1c1f;
@@ -47,12 +58,23 @@ h1, h2, .big, .q, .ftitle {
   height: 100vh;
 }
 
-.brand { display: flex; align-items: baseline; gap: 8px; padding-left: 8px; }
-.brand b {
-  font-family: "Source Han Serif SC", "Songti SC", serif;
-  font-size: 21px;
-  letter-spacing: .06em;
+.brand {
+  display: flex; align-items: baseline; gap: 8px; padding: 0 0 0 8px;
+  background: none; border: 0; margin: 0; color: inherit; font: inherit;
+  text-align: left; cursor: pointer; width: fit-content; border-radius: 4px;
+  position: relative;
 }
+/* 视觉上不动，把可点面积撑到 44px 以上，手机上更好点。 */
+.brand::before { content: ""; position: absolute; inset: -6px -4px; border-radius: 8px; }
+.brand b {
+  font-family: var(--logo);
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: .1em;
+  transition: color .15s ease;
+}
+.brand:hover b { color: var(--accent); }
+.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .brand span { font-size: 11.5px; color: var(--muted); letter-spacing: .04em; }
 
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -575,7 +597,7 @@ details.privacy code { background: #f0ece4; padding: 1px 4px; border-radius: 3px
 .app.solo #view { padding: 0 24px; }
 
 .lone { max-width: 720px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 16vh 0 30px; }
-.hero-mark { font-family: var(--serif); font-size: 30px; letter-spacing: .34em; color: var(--ink); margin: 0 0 26px; }
+.hero-mark { font-family: var(--logo); font-weight: 700; font-size: 34px; letter-spacing: .32em; color: var(--ink); margin: 0 0 26px; }
 .hero-h1 { font-family: var(--serif); font-size: 38px; line-height: 1.55; margin: 0 0 20px; letter-spacing: .01em; }
 .hero-lede { color: var(--ink-2); line-height: 1.95; max-width: 560px; margin: 0 auto 30px; }
 .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
@@ -683,7 +705,7 @@ details.fold2[open] > summary::before { content: "▾ "; }
   }
   .rail.min .steps { display: none; }
   .brand { padding-left: 0; gap: 0; }
-  .brand b { font-size: 16px; letter-spacing: .04em; }
+  .brand b { font-size: 18px; letter-spacing: .08em; }
   .brand span { display: none; }
   .steps {
     grid-column: 2;
@@ -706,10 +728,12 @@ details.fold2[open] > summary::before { content: "▾ "; }
     white-space: nowrap;
   }
   .railtoggle {
-    display: grid;
-    place-items: center;
+    display: inline-flex;
+    align-items: center;
+    justify-self: end;
     min-width: 44px;
     min-height: 36px;
+    white-space: nowrap;
     padding: 0 10px;
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -786,4 +810,94 @@ details.fold2[open] > summary::before { content: "▾ "; }
   .steps .label { display: none; }
   .steps .mshort { display: inline; }
   .steps button { padding: 0 9px; }
+}
+
+/* ───────── v0.8：回主页 / 矩阵入口 / 行动模式 ───────── */
+
+/* 主页上的矩阵小入口：不抢主按钮，但能把设计理念引出来 */
+.matrix-entry {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  max-width: 560px;
+  margin: 20px auto 0;
+  padding: 14px 18px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: rgba(255, 255, 255, .35);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.matrix-entry:hover { background: #fff; border-color: #cfc6b4; transform: translateY(-1px); }
+.matrix-entry .me-k { font-size: 10.5px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+.matrix-entry .me-t { font-family: var(--serif); font-size: 16px; font-weight: 700; color: var(--ink); }
+.matrix-entry .me-b { font-size: 12.5px; line-height: 1.7; color: var(--ink2); }
+.matrix-entry .me-x { margin-top: 3px; font-size: 12px; font-weight: 600; color: var(--accent); }
+
+/* 矩阵说明页：三个场景直接复用 .matrix / .mcards */
+.wrap.narrow > .matrix { margin-top: 26px; }
+.wrap.narrow > .matrix .mcards { max-width: 100%; }
+
+/* 任务页右上角的「调整」：平时收起，点开才露出设置入口 */
+.tasktools { display: flex; justify-content: flex-end; margin: -10px 0 2px; position: relative; z-index: 40; }
+.adjust { position: relative; }
+.adjust > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.adjust > summary::-webkit-details-marker { display: none; }
+.adjust > summary:after { content: "▾"; font-size: 9px; }
+.adjust[open] > summary { background: #fff; color: var(--ink); border-color: var(--accent); }
+.adjust[open] > summary:after { content: "▴"; }
+.adjustbody {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(320px, calc(100vw - 44px));
+  padding: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px -18px rgba(28, 24, 18, .4);
+  z-index: 50;
+  text-align: left;
+}
+.adjustbody p { margin: 0 0 10px; line-height: 1.65; }
+.adjustacts { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 行动模式：侧栏只留「这一件」，前面标一行「行动中」 */
+.focusmark { list-style: none; padding: 0 10px 4px; }
+.focusmark span { font-size: 10.5px; letter-spacing: .14em; color: var(--accent); }
+.rail.focus .steps { gap: 0; }
+.app.focus .rail { background: #faf8f2; }
+
+@media (max-width: 900px), (max-height: 520px) {
+  .rail.focus { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .focusmark { display: flex; align-items: center; padding: 0 4px 0 0; }
+  .focusmark span { font-size: 10px; letter-spacing: .08em; white-space: nowrap; }
+  .adjustbody { width: min(300px, calc(100vw - 40px)); }
+}
+
+@media (max-width: 620px) {
+  .matrix-entry { margin-top: 16px; padding: 12px 14px; }
+  .matrix-entry .me-b { font-size: 12px; }
+  /* 主页按钮在手机上竖排，长文案（继续 · 方向 · 第 3 件）不会挤成两行 */
+  .hero-cta { flex-direction: column; align-items: stretch; width: 100%; max-width: 360px; margin-left: auto; margin-right: auto; }
+  .hero-cta .btn { width: 100%; }
+  .lone .hero { width: 100%; }
+  .tasktools { margin-top: -6px; }
+  .adjust > summary { min-height: 34px; }
 }
