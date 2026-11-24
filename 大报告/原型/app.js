@@ -6,8 +6,14 @@ const OLD_KEY = "xianjian.v2.state";
 const view = document.getElementById("view");
 const rail = document.getElementById("rail");
 
+/* 会被「继续」带回去的正式页面；副页（账号/进度/关于/矩阵说明）不算 */
+const RESUME_SCREENS = { hello: 1, intro: 1, map: 1, know: 1, goal: 1, task: 1, check: 1, feedback: 1, finished: 1 };
+const FOCUS_SCREENS = { task: 1, check: 1, feedback: 1 };
+
 const DEFAULT = {
   screen: "landing",
+  resume: null,
+  resumeAt: 0,
   saves: [],
   activeSave: null,
   profile: { school: "东南大学", major: "ee", grade: "大一", hours: "4-6", interest: "" },
@@ -47,8 +53,14 @@ function load() {
     if (!raw) return JSON.parse(JSON.stringify(DEFAULT));
     const s = JSON.parse(raw);
     const st = Object.assign(JSON.parse(JSON.stringify(DEFAULT)), s);
-    /* 账号 / 进度 / 关于是「副页」，不该成为下次打开的落点 */
-    if (["account", "progress", "about"].indexOf(st.screen) >= 0) st.screen = "landing";
+    /* 每次打开网址都先回主页；上次走到哪记在 resume，点「继续」再回去。
+       副页（账号 / 进度 / 关于 / 矩阵说明）本来就不该被「继续」带回。 */
+    if (RESUME_SCREENS[st.screen]) {
+      st.resume = st.screen;
+      st.resumeAt = st.resumeAt || Date.now();
+    }
+    if (!RESUME_SCREENS[st.resume]) st.resume = null;
+    st.screen = "landing";
     return st;
   } catch (e) {
     return JSON.parse(JSON.stringify(DEFAULT));
@@ -62,6 +74,54 @@ function save() {
   try {
     if (window.XJ_ACCOUNT && window.XJ_ACCOUNT.onLocalChange) window.XJ_ACCOUNT.onLocalChange();
   } catch (e) {}
+}
+
+/* ───────── 首页「继续」：回到上次停下的那一屏 ───────── */
+
+function inFocus() {
+  return !!FOCUS_SCREENS[S.screen];
+}
+
+/* 存档可能被删、方向可能被换，所以「继续」前先确认目标还成立 */
+function resumeTarget() {
+  let s = S.resume;
+  if (!s || !RESUME_SCREENS[s]) {
+    /* 旧版本存档没有 resume 字段：有方向就回到手头这一件 */
+    if (S.dir) s = "task";
+    else if (S.knowDone) s = "know";
+    else return null;
+  }
+  if (["goal", "task", "check", "feedback", "finished"].indexOf(s) >= 0 && !S.dir) return null;
+  if ((s === "task" || s === "check" || s === "feedback") && !currentTask()) {
+    return S.dir ? "finished" : null;
+  }
+  return s;
+}
+
+function resumeLabel() {
+  const s = resumeTarget();
+  if (!s) return "";
+  const d = S.dir ? DIR_BY_ID[S.dir] : null;
+  const name = d ? d.name + " · " : "";
+  if (s === "task") {
+    const p = progressOf();
+    return name + "第 " + Math.min(p.done + 1, Math.max(p.all, 1)) + " 件";
+  }
+  if (s === "check") return name + "正在回答";
+  if (s === "feedback") return name + "刚做完一件";
+  if (s === "goal") return name + "我的计划";
+  if (s === "finished") return "走完的那条路";
+  if (s === "know") return "知识进度";
+  if (s === "map") return "方向地图";
+  if (s === "intro") return "专业介绍";
+  if (s === "hello") return "设置 · 专业与时长";
+  return "上次那一步";
+}
+
+function resumeTo() {
+  const s = resumeTarget() || (S.dir ? "task" : "hello");
+  S.screen = s;
+  paint(true);
 }
 
 /* ───────── 存档：一个人可以有多条并行的进度 ─────────
@@ -224,6 +284,11 @@ function completeTask(t) {
 let vtBusy = false;
 
 function paint(scroll) {
+  /* 只有正式页面才更新「上次走到哪」；主页/副页不会覆盖它 */
+  if (RESUME_SCREENS[S.screen]) {
+    S.resume = S.screen;
+    S.resumeAt = Date.now();
+  }
   const html = render();
   const swap = () => { view.innerHTML = html; syncRail(); };
   const after = () => {
@@ -268,8 +333,11 @@ function syncRail() {
   const solo = S.screen === "landing" || S.screen === "account";
   const app = document.querySelector(".app");
   if (app) app.classList.toggle("solo", solo);
+  const focus = inFocus();
+  if (app) app.classList.toggle("focus", focus);
   if (rail) {
-    rail.classList.toggle("min", S.screen === "landing" || S.screen === "about");
+    rail.classList.toggle("min", S.screen === "landing" || S.screen === "about" || S.screen === "matrix");
+    rail.classList.toggle("focus", focus);
     /* 换屏后收起「我的」面板，避免它盖住新页面 */
     rail.classList.remove("open");
     const tg = rail.querySelector(".railtoggle");
@@ -281,12 +349,16 @@ function syncRail() {
     { n: 2, t: "你现在到哪了", s: "学过什么，差在哪", ms: "看进度" },
     { n: 3, t: "手头这一件事", s: p ? p.done + "/" + p.all + " 件" : "做完再说下一步", ms: "这一件" },
   ];
-  const noHighlight = ["account", "progress", "about", "landing"].indexOf(S.screen) >= 0;
-  const activeIdx = noHighlight ? -1
-    : ["hello", "intro", "map"].indexOf(S.screen) >= 0 ? 0
-    : S.screen === "know" ? 1 : 2;
-  rail.querySelector(".steps").innerHTML = items.map((it, i) => {
-    return '<li><button class="' + (i === activeIdx ? "on" : "") + '" data-act="nav" data-n="' + it.n + '">'
+  const noHighlight = ["account", "progress", "about", "landing", "matrix"].indexOf(S.screen) >= 0;
+  const activeN = noHighlight ? 0
+    : focus ? 3
+    : ["hello", "intro", "map"].indexOf(S.screen) >= 0 ? 1
+    : S.screen === "know" ? 2 : 3;
+  /* 行动模式只留第 3 步：设置阶段的两张卡不挡路 */
+  const shown = focus ? [items[2]] : items;
+  const head = focus ? '<li class="focusmark"><span>行动中</span></li>' : "";
+  rail.querySelector(".steps").innerHTML = head + shown.map((it) => {
+    return '<li><button class="' + (it.n === activeN ? "on" : "") + '" data-act="nav" data-n="' + it.n + '">'
       + '<span class="num">' + it.n + '</span><span class="label">' + it.t + '</span>'
       + '<span class="mshort">' + it.ms + '</span></button></li>';
   }).join("");
@@ -300,6 +372,7 @@ function render() {
     case "about": return screenAbout();
     case "know": return screenKnow();
     case "map": return screenMap();
+    case "matrix": return screenMatrix();
     case "goal": return screenGoal();
     case "task": return screenTask();
     case "check": return screenCheck();
@@ -324,6 +397,9 @@ function pageBack(label, act) {
 function screenLanding() {
   const me = (window.XJ_ACCOUNT && XJ_ACCOUNT.me) || null;
   const A = window.AUTHOR || { name: "先见", role: "", email: "", repo: "" };
+  const rs = resumeTarget();
+  const rl = rs ? resumeLabel() : "";
+  const cont = rs ? '<button class="btn primary lg" data-act="resume">继续 · ' + rl + " →</button>" : "";
   return '<div class="lone">'
     + '<div class="hero">'
     + '<p class="hero-mark">先见</p>'
@@ -331,12 +407,24 @@ function screenLanding() {
     + '<p class="hero-lede">大多数人到大三才第一次看清自己能做什么。这里把顺序倒过来：先给你一张方向地图，再给你一件现在就能做的事，缺什么补什么。</p>'
     + '<div class="hero-cta">'
     + (me
-      ? '<button class="btn primary lg" data-act="toHello">继续 · ' + me.email.split("@")[0] + " →</button>"
-      + '<button class="btn lg" data-act="toAccount">账号与反馈</button>'
-      : '<button class="btn primary lg" data-act="toAccount">登录 / 注册</button>'
-      + '<button class="btn lg" data-act="toHello">先随便看看 →</button>')
+      ? cont
+        + '<button class="btn ' + (rs ? "" : "primary ") + 'lg" data-act="toHello">' + (rs ? "重新挑一条路" : "开始 · 先看看这个专业") + " →</button>"
+        + '<button class="btn lg ghost" data-act="toAccount">账号与反馈</button>'
+      : cont
+        + '<button class="btn ' + (rs ? "" : "primary ") + 'lg" data-act="toAccount">登录 / 注册</button>'
+        + '<button class="btn lg ghost" data-act="toHello">先随便看看 →</button>')
     + "</div>"
-    + '<p class="hero-fine">' + (me ? "已登录，进度跟着账号走。" : "不登录也能用；登录后进度跟着账号走。") + "</p>"
+    + '<p class="hero-fine">'
+    + (rs ? "上次停在「" + rl + "」。点「继续」接着走。"
+      : me ? "已登录，进度跟着账号走。"
+      : "不登录也能用；登录后进度跟着账号走。")
+    + "</p>"
+    + '<button class="matrix-entry" data-act="toMatrix" type="button">'
+    + '<span class="me-k">从一个问题开始</span>'
+    + '<span class="me-t">矩阵到底用来干什么？</span>'
+    + '<span class="me-b">先看见它在 OFDM、MIMO、卷积里长什么样——这也是先见把「方向」放在「知识」前面的原因。</span>'
+    + '<span class="me-x">先看三个真实场景 →</span>'
+    + "</button>"
     + "</div>"
     + '<div class="lone-links">'
     + '<a href="plan.html" target="_blank" rel="noopener">完整企划书</a>'
@@ -661,13 +749,40 @@ function screenMap() {
       '<div class="matrix cross"><h2 class="mini">如果你对其他专业的方向也感兴趣</h2>'
       + '<p class="small muted">这四条是跨学科的路，任何专业都能走；选一条，课程表会跟着换成对应专业的地基。</p>'
       + '<div class="dirs xdirs">' + CROSS_DIRECTIONS.map(dirCard).join("") + '</div></div>')
+    + '<div class="foot"><button class="btn" data-act="toKnow">回去改进度</button>'
+    + '<button class="btn ghost" data-act="toAbout">这份东西为什么长这样</button></div>'
+    + '</div>';
+}
+
+/* ───────── 3.5 矩阵：整个网站的设计起点 ───────── */
+
+function screenMatrix() {
+  const rs = resumeTarget();
+  return '<div class="wrap narrow">'
+    + pageBack("回到主页", "toLanding")
+    + '<p class="kicker">设计起点</p>'
+    + '<h1>先见，是从一个具体的问题开始的。</h1>'
+    + '<p class="lede">「矩阵到底用来干什么？」——几乎所有工科生都在大一把它当考试题背过，却很少有人在那时候见过它真正的样子。'
+    + '先见把顺序倒过来：先让你撞上一个必须用到它的问题，再回头学它。</p>'
     + '<div class="matrix">'
-    + '<h2 class="mini">如果你也想过「矩阵到底用来干什么」</h2>'
+    + '<h2 class="mini">三个真实的场景</h2>'
+    + '<p class="small muted">下面每一条都不是类比：拆开看，里面就是矩阵乘法和特征分解。</p>'
     + '<div class="mcards">' + MATRIX_HOOKS.map((m) =>
       '<details class="mcard"><summary>' + m.head + "</summary><p>" + m.body + '</p><p class="muted">' + m.shows + "</p></details>").join("") + "</div>"
     + '</div>'
-    + '<div class="foot"><button class="btn" data-act="toKnow">回去改进度</button>'
-    + '<button class="btn ghost" data-act="toAbout">这份东西为什么长这样</button></div>'
+    + '<div class="card soft">'
+    + '<div class="ctitle">所以先见长成这样</div>'
+    + '<ol class="tight">'
+    + '<li><b>先给方向地图。</b>不知道「要用它做什么」，知识就记不住；方向先出现，知识才有落点。</li>'
+    + '<li><b>一次只给一件事。</b>整个计划不一次摊开，只给现在能做完的那一件。</li>'
+    + '<li><b>做完追问为什么。</b>审查看过程，答不上来的地方，就是下一件要补的地基。</li>'
+    + '</ol></div>'
+    + '<div class="foot">'
+    + (rs
+      ? '<button class="btn primary" data-act="resume">回到上次 · ' + resumeLabel() + " →</button>"
+        + '<button class="btn" data-act="toMap">去挑一条路</button>'
+      : '<button class="btn primary" data-act="toMap">去挑一条路 →</button>')
+    + '<button class="btn ghost" data-act="toAbout">完整的四个不妥协</button></div>'
     + '</div>';
 }
 
@@ -728,7 +843,16 @@ function screenTask() {
   const p = progressOf();
   const n = p.done + 1;
   return '<div class="wrap narrow">'
-    + pageBack("回到计划", "toGoal")
+    + '<div class="tasktools"><details class="adjust"><summary>调整</summary>'
+    + '<div class="adjustbody">'
+    + '<p class="small muted">现在只显示手头这一件。想换方向、改进度或新建存档时再展开。</p>'
+    + '<div class="adjustacts">'
+    + '<button class="btn tiny" data-act="toMap">换方向</button>'
+    + '<button class="btn tiny" data-act="toKnow">改知识进度</button>'
+    + '<button class="btn tiny" data-act="toHello">改专业 / 时长</button>'
+    + '<button class="btn tiny" data-act="toProgress">存档与记录</button>'
+    + '<button class="btn tiny" data-act="newSave">新建存档</button>'
+    + '</div></div></details></div>'
     + '<div class="taskhead"><span class="kicker">第 ' + n + " 件 · 共 " + p.all + " 件</span>"
     + '<div class="dots">' + p.q.map((x, i) =>
       '<i class="' + (S.done.indexOf(x.key) >= 0 ? "on" : i === p.done ? "cur" : "") + '"></i>').join("") + "</div></div>"
@@ -1004,6 +1128,15 @@ document.addEventListener("click", async (ev) => {
     case "toLanding": {
       S.screen = "landing";
       save();
+      paint(true);
+      return;
+    }
+    case "resume": {
+      resumeTo();
+      return;
+    }
+    case "toMatrix": {
+      S.screen = "matrix";
       paint(true);
       return;
     }

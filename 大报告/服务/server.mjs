@@ -128,6 +128,7 @@ const MIME = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".svg": "image/svg+xml",
+  ".woff2": "font/woff2",
   ".json": "application/json; charset=utf-8",
   ".md": "text/markdown; charset=utf-8",
 };
